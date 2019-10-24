@@ -101,13 +101,7 @@ FixedSizeMeshContainer<T>::FixedSizeMeshContainer(FixedSizeMeshContainer<T>& sou
     blocksSize = source.getBlockSize();
     V.resize(source.getBlockSize()*source.getBlocksNumber());//allocating
 
-    for(int i = 0;i<source.getBlocksNumber();++i)
-    {
-        for(int j = 0;j<getBlockSize();++j)
-        {
-            operator[](i)[j] = source[i][j];
-        }
-    }
+    V = source.V;
 }
 
 

@@ -11,7 +11,6 @@ class VariableMeshContainer
     std::vector<int> IA;//offset vector. Size is (N+1)
     std::vector<T> V;//main grid vector
 
-
     int countBlockNumber(int vectorSize, const std::vector<int>& blockSizes);
 
     bool checkSizes(const std::vector<T>& source, const std::vector<int>& blockSizes);
@@ -43,8 +42,6 @@ public:
     int getBlocksNumber() const;
 
     int getBlockSize(int i) const;
-
-    const std::vector<int> &getIa() const;
 
     // void inline  printContainer(std::ostream& out = std::cout)
     // {
@@ -186,22 +183,13 @@ template <typename T>
 VariableMeshContainer<T>::VariableMeshContainer(VariableMeshContainer<T>& source)//number is size of each vector's block
 {
     blockNumber = source.getBlocksNumber();
-    V.resize(source.getIa()[source.getIa().size() - 1]);//allocating
-    IA.resize(source.getIa().size());
 
-    for(unsigned int i = 0;i<source.getIa().size();++i)
-    {
-        IA[i] = source.getIa()[i];
-    }
+    V.resize(source.IA[source.IA.size() - 1]);//allocating
+    IA.resize(source.IA.size());
 
-    for(int i = 0;i<source.getBlocksNumber();++i)
-    {
-        for(int j = 0;j<source.getBlockSize(i);++j)
-        {
-            operator[](i)[j] = source[i][j];
-        }
-    }
-
+    IA = source.IA;
+    V = source.V;
+    // V = 
 }
 
 //Can only add elements of vectors which sizes are divided without remainder into {M}
@@ -242,8 +230,8 @@ bool VariableMeshContainer<T>::add(VariableMeshContainer<T>& extra)
     int offset = IA[IA.size() - 1];
 
     this->blockNumber += extra.getBlocksNumber();
-    IA.resize(IA.size() + extra.getIa().size() - 1);
-    V.resize(V.size() + extra.getIa()[extra.getIa().size() - 1]);
+    IA.resize(IA.size() + extra.IA.size() - 1);
+    V.resize(V.size() + extra.IA[extra.IA.size() - 1]);
 
 
     for(int i = oldOffsetNum;i<IA.size();++i)
@@ -301,12 +289,6 @@ template <typename T>
 int VariableMeshContainer<T>::getBlockSize(int i) const
 {
     return IA[i+1] - IA[i];
-}
-
-template <typename T>
-const std::vector<int>&  VariableMeshContainer<T>::getIa() const
-{
-    return IA;
 }
 
 #endif
