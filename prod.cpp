@@ -4,8 +4,8 @@
 #include <vector>
 #include <cstdlib>
 #include <cstring>
-#include "VariableMeshContainer.cpp"
-#include "FixedMeshContainer.cpp"
+#include "VariableSizeMeshContainer.cpp"
+#include "FixedSizeMeshContainer.cpp"
 
 using namespace std;
 
@@ -100,11 +100,11 @@ void build_coord(FixedSizeMeshContainer<double>& C, double Lx, double Ly, int Nx
 }
 
 // Построение topoEN
-VariableMeshContainer<int> build_topoEN(FixedSizeMeshContainer<double> C, int Nx, int Ny, int k3, int k4, int nE){
+VariableSizeMeshContainer<int> build_topoEN(FixedSizeMeshContainer<double> C, int Nx, int Ny, int k3, int k4, int nE){
     vector<int> BlockSize;
     BlockSize.push_back(0);
     vector<int> temp;
-    VariableMeshContainer<int> topoEN;
+    VariableSizeMeshContainer<int> topoEN;
     bool figure = k3 > 0 ? false : true; // 0 - тругольник, 1 - квадрат
     int count_figure = figure ? k4 : k3;
     int EN_i = 0;
@@ -202,10 +202,10 @@ VariableMeshContainer<int> build_topoEN(FixedSizeMeshContainer<double> C, int Nx
 }
 
 // Построение topoNE
-VariableMeshContainer<int> build_topoNE(FixedSizeMeshContainer<double> C, VariableMeshContainer<int> topoEN, int Nx, int Ny, int k3, int k4, int nE){
+VariableSizeMeshContainer<int> build_topoNE(FixedSizeMeshContainer<double> C, VariableSizeMeshContainer<int> topoEN, int Nx, int Ny, int k3, int k4, int nE){
     vector<int> BlockSize;
     vector<int> temp;
-    VariableMeshContainer<int> topoNE(temp, BlockSize);
+    VariableSizeMeshContainer<int> topoNE(temp, BlockSize);
     int nN = Nx * Ny;
     int count_mas[nN];
     int count_i_mas[nN];
@@ -246,8 +246,8 @@ int main(int argc, char **argv) {
     int Nx, Ny, k3, k4, nN, nE;
     double Lx, Ly;
     FixedSizeMeshContainer<double> C(2);
-    VariableMeshContainer<int> topoEN;
-    VariableMeshContainer<int> topoNE;
+    VariableSizeMeshContainer<int> topoEN;
+    VariableSizeMeshContainer<int> topoNE;
 
     if (argc == 2){
         if (!strcmp(argv[1],"-help")) {

@@ -5,7 +5,7 @@
 
 //Realizing one-dimensional effective-accessible and storing block vector with matrix interface.
 template <typename T>
-class VariableMeshContainer
+class VariableSizeMeshContainer
 {
     int blockNumber;
     std::vector<int> IA;//offset vector. Size is (N+1)
@@ -19,23 +19,23 @@ class VariableMeshContainer
 
 public:
 
-    VariableMeshContainer();
+    VariableSizeMeshContainer();
     
-    //Creates VariableMeshContainer from source vector.
-    VariableMeshContainer(const std::vector<T>& source, const std::vector<int>& blockSizes);
+    //Creates VariableSizeMeshContainer from source vector.
+    VariableSizeMeshContainer(const std::vector<T>& source, const std::vector<int>& blockSizes);
 
-    VariableMeshContainer(VariableMeshContainer<T>& source);
+    VariableSizeMeshContainer(VariableSizeMeshContainer<T>& source);
 
     //Can only add elements of vectors which sizes are divided without remainder into {M}
     bool add(const std::vector<T>& extra,const std::vector<int>& blockSizes);
 
 
-    //Add another VariableMeshContainer elements to our container
-    bool add(VariableMeshContainer<T>& extra);
+    //Add another VariableSizeMeshContainer elements to our container
+    bool add(VariableSizeMeshContainer<T>& extra);
 
-    VariableMeshContainer operator+(VariableMeshContainer<T>& extra);
+    VariableSizeMeshContainer operator+(VariableSizeMeshContainer<T>& extra);
 
-    VariableMeshContainer& operator+=(VariableMeshContainer<T>& extra);
+    VariableSizeMeshContainer& operator+=(VariableSizeMeshContainer<T>& extra);
 
     T* operator[](int i);
 
@@ -103,7 +103,7 @@ public:
 };
 
 template<typename T>
-int VariableMeshContainer<T>::count_digit(int x)
+int VariableSizeMeshContainer<T>::count_digit(int x)
 {
     int i = 0;
     if (x == 0) return 1;
@@ -116,7 +116,7 @@ int VariableMeshContainer<T>::count_digit(int x)
 }
 
 template <typename T>
-int VariableMeshContainer<T>::countBlockNumber(int vectorSize, const std::vector<int>& blockSizes)
+int VariableSizeMeshContainer<T>::countBlockNumber(int vectorSize, const std::vector<int>& blockSizes)
 {
     int blockNum = 0;
     int delta = 0;
@@ -134,7 +134,7 @@ int VariableMeshContainer<T>::countBlockNumber(int vectorSize, const std::vector
 }
 
 template <typename T>
-bool VariableMeshContainer<T>::checkSizes(const std::vector<T>& source, const std::vector<int>& blockSizes)
+bool VariableSizeMeshContainer<T>::checkSizes(const std::vector<T>& source, const std::vector<int>& blockSizes)
 {
     unsigned int blSizeElems = 0;
     for(typename std::vector<int>::const_iterator it = blockSizes.begin(); it != blockSizes.end();++it)
@@ -146,15 +146,15 @@ bool VariableMeshContainer<T>::checkSizes(const std::vector<T>& source, const st
 
 //default constructor
 template <typename T>
-VariableMeshContainer<T>::VariableMeshContainer()
+VariableSizeMeshContainer<T>::VariableSizeMeshContainer()
 {
     blockNumber = 0;
 }
 
 
-//Creates VariableMeshContainer from source vector.
+//Creates VariableSizeMeshContainer from source vector.
 template <typename T>
-VariableMeshContainer<T>::VariableMeshContainer(const std::vector<T>& source, const std::vector<int>& blockSizes)//number is size of each vector's block
+VariableSizeMeshContainer<T>::VariableSizeMeshContainer(const std::vector<T>& source, const std::vector<int>& blockSizes)//number is size of each vector's block
 {
     if (!checkSizes(source,blockSizes))
     {
@@ -180,7 +180,7 @@ VariableMeshContainer<T>::VariableMeshContainer(const std::vector<T>& source, co
 }
 
 template <typename T>
-VariableMeshContainer<T>::VariableMeshContainer(VariableMeshContainer<T>& source)//number is size of each vector's block
+VariableSizeMeshContainer<T>::VariableSizeMeshContainer(VariableSizeMeshContainer<T>& source)//number is size of each vector's block
 {
     blockNumber = source.getBlocksNumber();
 
@@ -194,7 +194,7 @@ VariableMeshContainer<T>::VariableMeshContainer(VariableMeshContainer<T>& source
 
 //Can only add elements of vectors which sizes are divided without remainder into {M}
 template <typename T>
-bool VariableMeshContainer<T>::add(const std::vector<T>& extra,const std::vector<int>& blockSizes)
+bool VariableSizeMeshContainer<T>::add(const std::vector<T>& extra,const std::vector<int>& blockSizes)
 {
     if (!checkSizes(extra,blockSizes))
     {
@@ -221,9 +221,9 @@ bool VariableMeshContainer<T>::add(const std::vector<T>& extra,const std::vector
 }
 
 
-//Add another VariableMeshContainer elements to our container
+//Add another VariableSizeMeshContainer elements to our container
 template <typename T>
-bool VariableMeshContainer<T>::add(VariableMeshContainer<T>& extra)
+bool VariableSizeMeshContainer<T>::add(VariableSizeMeshContainer<T>& extra)
 {
     int oldBlocksNum = blockNumber;
     int oldOffsetNum = IA.size();
@@ -251,22 +251,22 @@ bool VariableMeshContainer<T>::add(VariableMeshContainer<T>& extra)
 }
 
 template <typename T>
-VariableMeshContainer<T> VariableMeshContainer<T>::operator+(VariableMeshContainer<T>& extra)
+VariableSizeMeshContainer<T> VariableSizeMeshContainer<T>::operator+(VariableSizeMeshContainer<T>& extra)
 {
-    VariableMeshContainer temp_grid(*this);
+    VariableSizeMeshContainer temp_grid(*this);
     temp_grid.add(extra);
     return temp_grid;
 }
 
 template <typename T>
-VariableMeshContainer<T>& VariableMeshContainer<T>::operator+=(VariableMeshContainer<T>& extra)
+VariableSizeMeshContainer<T>& VariableSizeMeshContainer<T>::operator+=(VariableSizeMeshContainer<T>& extra)
 {
     (*this).add(extra);
     return *this;
 }
 
 template <typename T>
-T* VariableMeshContainer<T>::operator[](int i)
+T* VariableSizeMeshContainer<T>::operator[](int i)
 {
     if (i >= getBlocksNumber())
     {
@@ -280,13 +280,13 @@ T* VariableMeshContainer<T>::operator[](int i)
 }
 
 template <typename T>
-int VariableMeshContainer<T>::getBlocksNumber() const
+int VariableSizeMeshContainer<T>::getBlocksNumber() const
 {
     return blockNumber;
 }
 
 template <typename T>
-int VariableMeshContainer<T>::getBlockSize(int i) const
+int VariableSizeMeshContainer<T>::getBlockSize(int i) const
 {
     return IA[i+1] - IA[i];
 }
