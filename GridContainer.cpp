@@ -16,6 +16,8 @@ class GridContainer
 
     bool checkSizes(const std::vector<T>& source, const std::vector<int>& blockSizes);
 
+    int count_digit(int x);
+
 public:
 
     GridContainer();
@@ -44,19 +46,77 @@ public:
 
     const std::vector<int> &getIa() const;
 
-    void inline  printContainer(std::ostream& out = std::cout)
+    // void inline  printContainer(std::ostream& out = std::cout)
+    // {
+    //     for(int i = 0;i<getBlocksNumber();++i)
+    //     {
+    //         for(int j = 0;j < getBlockSize(i);++j)
+    //         {
+    //             out << operator[](i)[j];
+    //             out << " ";
+    //         }
+    //         out << std::endl;
+    //     }
+    // }
+
+    void inline printContainer_coord_EN(std::ostream& out = std::cout)
     {
         for(int i = 0;i<getBlocksNumber();++i)
         {
             for(int j = 0;j < getBlockSize(i);++j)
             {
-                out << operator[](i)[j];
+                if (j % 2 == 0)
+                {
+                    out << "(";
+                    out << operator[](i)[j];
+                    out << ", ";
+                }
+                else
+                {
+                    out << operator[](i)[j];
+                    out << ")  ";
+                }
+            }
+            out << std::endl;
+        }
+    }
+    void inline printContainer(std::ostream& out = std::cout)
+    {
+        for(int i = 0;i<getBlocksNumber();++i)
+        {
+            // 15 всего пробелов
+            for (int j = 0; j < 7; j++)
+            {
                 out << " ";
+            }
+            out << i;
+            for (int j = 0; j < 8 - count_digit(i); j++)
+            {
+                out << " ";
+            }
+            out << "|    ";
+            for(int j = 0;j < getBlockSize(i);++j)
+            {
+                out << operator[](i)[j];
+                if (j != getBlockSize(i) - 1)   out << ",";
             }
             out << std::endl;
         }
     }
 };
+
+template<typename T>
+int GridContainer<T>::count_digit(int x)
+{
+    int i = 0;
+    if (x == 0) return 1;
+    while (x > 0)
+    {
+        x /= 10;
+        i++;
+    }
+    return i;
+}
 
 template <typename T>
 int GridContainer<T>::countBlockNumber(int vectorSize, const std::vector<int>& blockSizes)
@@ -79,7 +139,7 @@ int GridContainer<T>::countBlockNumber(int vectorSize, const std::vector<int>& b
 template <typename T>
 bool GridContainer<T>::checkSizes(const std::vector<T>& source, const std::vector<int>& blockSizes)
 {
-    int blSizeElems = 0;
+    unsigned int blSizeElems = 0;
     for(typename std::vector<int>::const_iterator it = blockSizes.begin(); it != blockSizes.end();++it)
     {
         blSizeElems += *it;
@@ -129,7 +189,7 @@ GridContainer<T>::GridContainer(GridContainer<T>& source)//number is size of eac
     V.resize(source.getIa()[source.getIa().size() - 1]);//allocating
     IA.resize(source.getIa().size());
 
-    for(int i = 0;i<source.getIa().size();++i)
+    for(unsigned int i = 0;i<source.getIa().size();++i)
     {
         IA[i] = source.getIa()[i];
     }

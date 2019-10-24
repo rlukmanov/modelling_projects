@@ -15,6 +15,8 @@ public:
 
     ConstGridContainer();
 
+    ConstGridContainer(int num);
+
     ConstGridContainer(const std::vector<T>& source,int blockSize);
 
     ConstGridContainer(ConstGridContainer<T>& source);
@@ -38,16 +40,38 @@ public:
 
     void inline printContainer(std::ostream& out = std::cout)
     {
-        for(int i = 0;i<getBlocksNumber();++i)
+        for(int i = 0;i<getBlocksNumber();++i) 
         {
             for(int j = 0;j < blocksSize;++j)
             {
-                out << operator[](i)[j];
-                out << " ";
+                if (j % 2 == 0)
+                {
+                    out << "(";
+                    out << operator[](i)[j];
+                    out << ", ";
+                }
+                else
+                {
+                    out << operator[](i)[j];
+                    out << ")  ";
+                }
             }
             out << std::endl;
         }
     }
+
+    // void inline printContainer(std::ostream& out = std::cout)
+    // {
+    //     for(int i = 0;i<getBlocksNumber();++i)
+    //     {
+    //         for(int j = 0;j < blocksSize;++j)
+    //         {
+    //             out << operator[](i)[j];
+    //             out << " ";
+    //         }
+    //         out << std::endl;
+    //     }
+    // }
 };
 
 //default constructor
@@ -56,6 +80,9 @@ ConstGridContainer<T>::ConstGridContainer()
 {
     blocksSize = 0;
 }
+
+template<typename T>
+ConstGridContainer<T>::ConstGridContainer(int num):blocksSize(num){};
 
 template <typename T>
 ConstGridContainer<T>::ConstGridContainer(const std::vector<T>& source,int blockSize)//number is size of each vector's block
