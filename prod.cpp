@@ -4,8 +4,8 @@
 #include <vector>
 #include <cstdlib>
 #include <cstring>
-#include "GridContainer.cpp"
-#include "ConstGridContainer.cpp"
+#include "VariableMeshContainer.cpp"
+#include "FixedMeshContainer.cpp"
 
 using namespace std;
 
@@ -86,7 +86,7 @@ int num_elem(int Nx, int Ny, int k3, int k4){
 }
 
 // Построение массива координат
-void build_coord(ConstGridContainer<double>& C, double Lx, double Ly, int Nx, int Ny){
+void build_coord(FixedSizeMeshContainer<double>& C, double Lx, double Ly, int Nx, int Ny){
     vector<double> temp;
 
     for (int i = 0; i < Ny; i++) {
@@ -100,11 +100,11 @@ void build_coord(ConstGridContainer<double>& C, double Lx, double Ly, int Nx, in
 }
 
 // Построение topoEN
-GridContainer<int> build_topoEN(ConstGridContainer<double> C, int Nx, int Ny, int k3, int k4, int nE){
+VariableMeshContainer<int> build_topoEN(FixedSizeMeshContainer<double> C, int Nx, int Ny, int k3, int k4, int nE){
     vector<int> BlockSize;
     BlockSize.push_back(0);
     vector<int> temp;
-    GridContainer<int> topoEN;
+    VariableMeshContainer<int> topoEN;
     bool figure = k3 > 0 ? false : true; // 0 - тругольник, 1 - квадрат
     int count_figure = figure ? k4 : k3;
     int EN_i = 0;
@@ -202,10 +202,10 @@ GridContainer<int> build_topoEN(ConstGridContainer<double> C, int Nx, int Ny, in
 }
 
 // Построение topoNE
-GridContainer<int> build_topoNE(ConstGridContainer<double> C, GridContainer<int> topoEN, int Nx, int Ny, int k3, int k4, int nE){
+VariableMeshContainer<int> build_topoNE(FixedSizeMeshContainer<double> C, VariableMeshContainer<int> topoEN, int Nx, int Ny, int k3, int k4, int nE){
     vector<int> BlockSize;
     vector<int> temp;
-    GridContainer<int> topoNE(temp, BlockSize);
+    VariableMeshContainer<int> topoNE(temp, BlockSize);
     int nN = Nx * Ny;
     int count_mas[nN];
     int count_i_mas[nN];
@@ -245,9 +245,9 @@ GridContainer<int> build_topoNE(ConstGridContainer<double> C, GridContainer<int>
 int main(int argc, char **argv) {
     int Nx, Ny, k3, k4, nN, nE;
     double Lx, Ly;
-    ConstGridContainer<double> C(2);
-    GridContainer<int> topoEN;
-    GridContainer<int> topoNE;
+    FixedSizeMeshContainer<double> C(2);
+    VariableMeshContainer<int> topoEN;
+    VariableMeshContainer<int> topoNE;
 
     if (argc == 2){
         if (!strcmp(argv[1],"-help")) {

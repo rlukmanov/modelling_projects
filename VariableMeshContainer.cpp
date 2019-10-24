@@ -5,7 +5,7 @@
 
 //Realizing one-dimensional effective-accessible and storing block vector with matrix interface.
 template <typename T>
-class GridContainer
+class VariableMeshContainer
 {
     int blockNumber;
     std::vector<int> IA;//offset vector. Size is (N+1)
@@ -20,23 +20,23 @@ class GridContainer
 
 public:
 
-    GridContainer();
+    VariableMeshContainer();
     
-    //Creates GridContainer from source vector.
-    GridContainer(const std::vector<T>& source, const std::vector<int>& blockSizes);
+    //Creates VariableMeshContainer from source vector.
+    VariableMeshContainer(const std::vector<T>& source, const std::vector<int>& blockSizes);
 
-    GridContainer(GridContainer<T>& source);
+    VariableMeshContainer(VariableMeshContainer<T>& source);
 
     //Can only add elements of vectors which sizes are divided without remainder into {M}
     bool add(const std::vector<T>& extra,const std::vector<int>& blockSizes);
 
 
-    //Add another GridContainer elements to our container
-    bool add(GridContainer<T>& extra);
+    //Add another VariableMeshContainer elements to our container
+    bool add(VariableMeshContainer<T>& extra);
 
-    GridContainer operator+(GridContainer<T>& extra);
+    VariableMeshContainer operator+(VariableMeshContainer<T>& extra);
 
-    GridContainer& operator+=(GridContainer<T>& extra);
+    VariableMeshContainer& operator+=(VariableMeshContainer<T>& extra);
 
     T* operator[](int i);
 
@@ -106,7 +106,7 @@ public:
 };
 
 template<typename T>
-int GridContainer<T>::count_digit(int x)
+int VariableMeshContainer<T>::count_digit(int x)
 {
     int i = 0;
     if (x == 0) return 1;
@@ -119,7 +119,7 @@ int GridContainer<T>::count_digit(int x)
 }
 
 template <typename T>
-int GridContainer<T>::countBlockNumber(int vectorSize, const std::vector<int>& blockSizes)
+int VariableMeshContainer<T>::countBlockNumber(int vectorSize, const std::vector<int>& blockSizes)
 {
     int blockNum = 0;
     int delta = 0;
@@ -137,7 +137,7 @@ int GridContainer<T>::countBlockNumber(int vectorSize, const std::vector<int>& b
 }
 
 template <typename T>
-bool GridContainer<T>::checkSizes(const std::vector<T>& source, const std::vector<int>& blockSizes)
+bool VariableMeshContainer<T>::checkSizes(const std::vector<T>& source, const std::vector<int>& blockSizes)
 {
     unsigned int blSizeElems = 0;
     for(typename std::vector<int>::const_iterator it = blockSizes.begin(); it != blockSizes.end();++it)
@@ -149,15 +149,15 @@ bool GridContainer<T>::checkSizes(const std::vector<T>& source, const std::vecto
 
 //default constructor
 template <typename T>
-GridContainer<T>::GridContainer()
+VariableMeshContainer<T>::VariableMeshContainer()
 {
     blockNumber = 0;
 }
 
 
-//Creates GridContainer from source vector.
+//Creates VariableMeshContainer from source vector.
 template <typename T>
-GridContainer<T>::GridContainer(const std::vector<T>& source, const std::vector<int>& blockSizes)//number is size of each vector's block
+VariableMeshContainer<T>::VariableMeshContainer(const std::vector<T>& source, const std::vector<int>& blockSizes)//number is size of each vector's block
 {
     if (!checkSizes(source,blockSizes))
     {
@@ -183,7 +183,7 @@ GridContainer<T>::GridContainer(const std::vector<T>& source, const std::vector<
 }
 
 template <typename T>
-GridContainer<T>::GridContainer(GridContainer<T>& source)//number is size of each vector's block
+VariableMeshContainer<T>::VariableMeshContainer(VariableMeshContainer<T>& source)//number is size of each vector's block
 {
     blockNumber = source.getBlocksNumber();
     V.resize(source.getIa()[source.getIa().size() - 1]);//allocating
@@ -206,7 +206,7 @@ GridContainer<T>::GridContainer(GridContainer<T>& source)//number is size of eac
 
 //Can only add elements of vectors which sizes are divided without remainder into {M}
 template <typename T>
-bool GridContainer<T>::add(const std::vector<T>& extra,const std::vector<int>& blockSizes)
+bool VariableMeshContainer<T>::add(const std::vector<T>& extra,const std::vector<int>& blockSizes)
 {
     if (!checkSizes(extra,blockSizes))
     {
@@ -233,9 +233,9 @@ bool GridContainer<T>::add(const std::vector<T>& extra,const std::vector<int>& b
 }
 
 
-//Add another GridContainer elements to our container
+//Add another VariableMeshContainer elements to our container
 template <typename T>
-bool GridContainer<T>::add(GridContainer<T>& extra)
+bool VariableMeshContainer<T>::add(VariableMeshContainer<T>& extra)
 {
     int oldBlocksNum = blockNumber;
     int oldOffsetNum = IA.size();
@@ -263,22 +263,22 @@ bool GridContainer<T>::add(GridContainer<T>& extra)
 }
 
 template <typename T>
-GridContainer<T> GridContainer<T>::operator+(GridContainer<T>& extra)
+VariableMeshContainer<T> VariableMeshContainer<T>::operator+(VariableMeshContainer<T>& extra)
 {
-    GridContainer temp_grid(*this);
+    VariableMeshContainer temp_grid(*this);
     temp_grid.add(extra);
     return temp_grid;
 }
 
 template <typename T>
-GridContainer<T>& GridContainer<T>::operator+=(GridContainer<T>& extra)
+VariableMeshContainer<T>& VariableMeshContainer<T>::operator+=(VariableMeshContainer<T>& extra)
 {
     (*this).add(extra);
     return *this;
 }
 
 template <typename T>
-T* GridContainer<T>::operator[](int i)
+T* VariableMeshContainer<T>::operator[](int i)
 {
     if (i >= getBlocksNumber())
     {
@@ -292,19 +292,19 @@ T* GridContainer<T>::operator[](int i)
 }
 
 template <typename T>
-int GridContainer<T>::getBlocksNumber() const
+int VariableMeshContainer<T>::getBlocksNumber() const
 {
     return blockNumber;
 }
 
 template <typename T>
-int GridContainer<T>::getBlockSize(int i) const
+int VariableMeshContainer<T>::getBlockSize(int i) const
 {
     return IA[i+1] - IA[i];
 }
 
 template <typename T>
-const std::vector<int>&  GridContainer<T>::getIa() const
+const std::vector<int>&  VariableMeshContainer<T>::getIa() const
 {
     return IA;
 }

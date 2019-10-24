@@ -5,7 +5,7 @@
 
 //Realizing one-dimensional effective-accessible and storing block vector with matrix interface.
 template <typename T>
-class ConstGridContainer
+class FixedSizeMeshContainer
 {
 
     int blocksSize;
@@ -13,24 +13,24 @@ class ConstGridContainer
 
 public:
 
-    ConstGridContainer();
+    FixedSizeMeshContainer();
 
-    ConstGridContainer(int num);
+    FixedSizeMeshContainer(int num);
 
-    ConstGridContainer(const std::vector<T>& source,int blockSize);
+    FixedSizeMeshContainer(const std::vector<T>& source,int blockSize);
 
-    ConstGridContainer(ConstGridContainer<T>& source);
+    FixedSizeMeshContainer(FixedSizeMeshContainer<T>& source);
 
     //Can only add elements of vectors which sizes are divided without remainder into {M}
     bool add(const std::vector<T>& extra);
 
     //Add another GridContainer elements to our container
-    bool add(ConstGridContainer<T>& extra);
+    bool add(FixedSizeMeshContainer<T>& extra);
 
 
-    ConstGridContainer operator+(ConstGridContainer<T>& extra);
+    FixedSizeMeshContainer operator+(FixedSizeMeshContainer<T>& extra);
 
-    ConstGridContainer& operator+=(ConstGridContainer<T>& extra);
+    FixedSizeMeshContainer& operator+=(FixedSizeMeshContainer<T>& extra);
 
     T* operator[](int i);
 
@@ -76,16 +76,16 @@ public:
 
 //default constructor
 template <typename T>
-ConstGridContainer<T>::ConstGridContainer()
+FixedSizeMeshContainer<T>::FixedSizeMeshContainer()
 {
     blocksSize = 0;
 }
 
 template<typename T>
-ConstGridContainer<T>::ConstGridContainer(int num):blocksSize(num){};
+FixedSizeMeshContainer<T>::FixedSizeMeshContainer(int num):blocksSize(num){};
 
 template <typename T>
-ConstGridContainer<T>::ConstGridContainer(const std::vector<T>& source,int blockSize)//number is size of each vector's block
+FixedSizeMeshContainer<T>::FixedSizeMeshContainer(const std::vector<T>& source,int blockSize)
 {
     blocksSize = blockSize;
     V.reserve(source.size());
@@ -96,7 +96,7 @@ ConstGridContainer<T>::ConstGridContainer(const std::vector<T>& source,int block
 }
 
 template <typename T>
-ConstGridContainer<T>::ConstGridContainer(ConstGridContainer<T>& source)//number is size of each vector's block
+FixedSizeMeshContainer<T>::FixedSizeMeshContainer(FixedSizeMeshContainer<T>& source)
 {
     blocksSize = source.getBlockSize();
     V.resize(source.getBlockSize()*source.getBlocksNumber());//allocating
@@ -113,7 +113,7 @@ ConstGridContainer<T>::ConstGridContainer(ConstGridContainer<T>& source)//number
 
 //Can only add elements of vectors which sizes are divided without remainder into {M}
 template <typename T>
-bool ConstGridContainer<T>::add(const std::vector<T>& extra)
+bool FixedSizeMeshContainer<T>::add(const std::vector<T>& extra)
 {
     if (extra.size() % blocksSize != 0)
     {
@@ -133,7 +133,7 @@ bool ConstGridContainer<T>::add(const std::vector<T>& extra)
 
 //Add another GridContainer elements to our container
 template <typename T>
-bool ConstGridContainer<T>::add(ConstGridContainer<T>& extra)
+bool FixedSizeMeshContainer<T>::add(FixedSizeMeshContainer<T>& extra)
 {
     if (extra.getBlockSize() != getBlockSize())
     {
@@ -156,22 +156,22 @@ bool ConstGridContainer<T>::add(ConstGridContainer<T>& extra)
 }
 
 template <typename T>
-ConstGridContainer<T> ConstGridContainer<T>::operator+(ConstGridContainer<T>& extra)
+FixedSizeMeshContainer<T> FixedSizeMeshContainer<T>::operator+(FixedSizeMeshContainer<T>& extra)
 {
-    ConstGridContainer temp_grid(*this);
+    FixedSizeMeshContainer temp_grid(*this);
     temp_grid.add(extra);
     return temp_grid;
 }
 
 template <typename T>
-ConstGridContainer<T>& ConstGridContainer<T>::operator+=(ConstGridContainer<T>& extra)
+FixedSizeMeshContainer<T>& FixedSizeMeshContainer<T>::operator+=(FixedSizeMeshContainer<T>& extra)
 {
     (*this).add(extra);
     return *this;
 }
 
 template <typename T>
-T* ConstGridContainer<T>::operator[](int i)
+T* FixedSizeMeshContainer<T>::operator[](int i)
 {
     if (i >= getBlocksNumber())
     {
@@ -185,13 +185,13 @@ T* ConstGridContainer<T>::operator[](int i)
 }
 
 template <typename T>
-int ConstGridContainer<T>::getBlocksNumber() const
+int FixedSizeMeshContainer<T>::getBlocksNumber() const
 {
     return V.size()/getBlockSize();
 }
 
 template <typename T>
-int ConstGridContainer<T>::getBlockSize() const
+int FixedSizeMeshContainer<T>::getBlockSize() const
 {
     return blocksSize;
 }
