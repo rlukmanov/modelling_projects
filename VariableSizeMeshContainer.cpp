@@ -1,7 +1,6 @@
 #include <vector>
 #include <iostream>
-#ifndef __GRID
-#define __GRID
+#pragma once
 
 //Realizing one-dimensional effective-accessible and storing block vector with matrix interface.
 template <typename T>
@@ -24,28 +23,32 @@ public:
     //Creates VariableSizeMeshContainer from source vector.
     VariableSizeMeshContainer(const std::vector<T>& source, const std::vector<int>& blockSizes);
 
-    VariableSizeMeshContainer(VariableSizeMeshContainer<T>& source);
+    VariableSizeMeshContainer(const VariableSizeMeshContainer<T>& source);
 
     //Can only add elements of vectors which sizes are divided without remainder into {M}
     bool add(const std::vector<T>& extra,const std::vector<int>& blockSizes);
 
 
     //Add another VariableSizeMeshContainer elements to our container
-    bool add(VariableSizeMeshContainer<T>& extra);
+    bool add(const VariableSizeMeshContainer<T>& extra);
 
-    VariableSizeMeshContainer operator+(VariableSizeMeshContainer<T>& extra);
+    VariableSizeMeshContainer& operator=(const VariableSizeMeshContainer<T>& target);
 
-    VariableSizeMeshContainer& operator+=(VariableSizeMeshContainer<T>& extra);
+    VariableSizeMeshContainer operator+(const VariableSizeMeshContainer<T>& extra);
+
+    VariableSizeMeshContainer& operator+=(const VariableSizeMeshContainer<T>& extra);
 
     T* operator[](int i);
 
-    int getBlocksNumber() const;
+    const T* operator[](int i) const;
+
+    int getBlockNumber() const;
 
     int getBlockSize(int i) const;
 
-    // void inline  printContainer(std::ostream& out = std::cout)
+    // void inline printContainer(std::ostream& out = std::cout)
     // {
-    //     for(int i = 0;i<getBlocksNumber();++i)
+    //     for(int i = 0;i<BlocksNumber;++i)
     //     {
     //         for(int j = 0;j < getBlockSize(i);++j)
     //         {
@@ -58,7 +61,7 @@ public:
 
     void inline printContainer_coord_EN(std::ostream& out = std::cout)
     {
-        for(int i = 0;i<getBlocksNumber();++i)
+        for(int i = 0;i<blockNumber;++i)
         {
             for(int j = 0;j < getBlockSize(i);++j)
             {
@@ -79,7 +82,7 @@ public:
     }
     void inline printContainer(std::ostream& out = std::cout)
     {
-        for(int i = 0;i<getBlocksNumber();++i)
+        for(int i = 0;i<blockNumber;++i)
         {
             // 15 всего пробелов
             for (int j = 0; j < 7; j++)
@@ -180,16 +183,15 @@ VariableSizeMeshContainer<T>::VariableSizeMeshContainer(const std::vector<T>& so
 }
 
 template <typename T>
-VariableSizeMeshContainer<T>::VariableSizeMeshContainer(VariableSizeMeshContainer<T>& source)//number is size of each vector's block
+VariableSizeMeshContainer<T>::VariableSizeMeshContainer(const VariableSizeMeshContainer<T>& source)//number is size of each vector's block
 {
-    blockNumber = source.getBlocksNumber();
+    blockNumber = source.blockNumber;
 
     V.resize(source.IA[source.IA.size() - 1]);//allocating
     IA.resize(source.IA.size());
 
     IA = source.IA;
     V = source.V;
-    // V = 
 }
 
 //Can only add elements of vectors which sizes are divided without remainder into {M}
@@ -223,13 +225,13 @@ bool VariableSizeMeshContainer<T>::add(const std::vector<T>& extra,const std::ve
 
 //Add another VariableSizeMeshContainer elements to our container
 template <typename T>
-bool VariableSizeMeshContainer<T>::add(VariableSizeMeshContainer<T>& extra)
+bool VariableSizeMeshContainer<T>::add(const VariableSizeMeshContainer<T>& extra)
 {
     int oldBlocksNum = blockNumber;
     int oldOffsetNum = IA.size();
     int offset = IA[IA.size() - 1];
 
-    this->blockNumber += extra.getBlocksNumber();
+    this->blockNumber += extra.BlocksNumber;
     IA.resize(IA.size() + extra.IA.size() - 1);
     V.resize(V.size() + extra.IA[extra.IA.size() - 1]);
 
@@ -250,8 +252,26 @@ bool VariableSizeMeshContainer<T>::add(VariableSizeMeshContainer<T>& extra)
     return true;
 }
 
+
 template <typename T>
-VariableSizeMeshContainer<T> VariableSizeMeshContainer<T>::operator+(VariableSizeMeshContainer<T>& extra)
+VariableSizeMeshContainer<T>& VariableSizeMeshContainer<T>::operator=(const VariableSizeMeshContainer<T>& target)
+{
+    blockNumber = target.blockNumber;
+    
+    V.clear();
+    IA.clear();
+
+    V.resize(target.IA[target.IA.size() - 1]);//allocating
+    IA.resize(target.IA.size());
+
+    IA = target.IA;
+    V = target.V;
+    
+    return (*this);
+}
+
+template <typename T>
+VariableSizeMeshContainer<T> VariableSizeMeshContainer<T>::operator+(const VariableSizeMeshContainer<T>& extra)
 {
     VariableSizeMeshContainer temp_grid(*this);
     temp_grid.add(extra);
@@ -259,7 +279,7 @@ VariableSizeMeshContainer<T> VariableSizeMeshContainer<T>::operator+(VariableSiz
 }
 
 template <typename T>
-VariableSizeMeshContainer<T>& VariableSizeMeshContainer<T>::operator+=(VariableSizeMeshContainer<T>& extra)
+VariableSizeMeshContainer<T>& VariableSizeMeshContainer<T>::operator+=(const VariableSizeMeshContainer<T>& extra)
 {
     (*this).add(extra);
     return *this;
@@ -268,7 +288,7 @@ VariableSizeMeshContainer<T>& VariableSizeMeshContainer<T>::operator+=(VariableS
 template <typename T>
 T* VariableSizeMeshContainer<T>::operator[](int i)
 {
-    if (i >= getBlocksNumber())
+    if (i >= blockNumber)
     {
         std::cerr << "Error: Index out of bounds" << std::endl;
         return nullptr;
@@ -280,7 +300,21 @@ T* VariableSizeMeshContainer<T>::operator[](int i)
 }
 
 template <typename T>
-int VariableSizeMeshContainer<T>::getBlocksNumber() const
+const T* VariableSizeMeshContainer<T>::operator[](int i) const
+{
+    if (i >= blockNumber)
+    {
+        std::cerr << "Error: Index out of bounds" << std::endl;
+        return nullptr;
+    }
+    else
+    {
+        return &V[0] + IA[i];
+    }
+}
+
+template <typename T>
+int VariableSizeMeshContainer<T>::getBlockNumber() const
 {
     return blockNumber;
 }
@@ -290,5 +324,3 @@ int VariableSizeMeshContainer<T>::getBlockSize(int i) const
 {
     return IA[i+1] - IA[i];
 }
-
-#endif

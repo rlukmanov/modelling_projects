@@ -1,14 +1,13 @@
 #include <vector>
 #include <iostream>
-#ifndef __CONST_GRID
-#define __CONST_GRID
+#pragma once
 
 //Realizing one-dimensional effective-accessible and storing block vector with matrix interface.
 template <typename T>
 class FixedSizeMeshContainer
 {
 
-    int blocksSize;
+    int blockSize;
     std::vector<T> V;//main grid vector
 
 public:
@@ -19,20 +18,24 @@ public:
 
     FixedSizeMeshContainer(const std::vector<T>& source,int blockSize);
 
-    FixedSizeMeshContainer(FixedSizeMeshContainer<T>& source);
+    FixedSizeMeshContainer(const FixedSizeMeshContainer<T>& source);
 
     //Can only add elements of vectors which sizes are divided without remainder into {M}
     bool add(const std::vector<T>& extra);
 
     //Add another GridContainer elements to our container
-    bool add(FixedSizeMeshContainer<T>& extra);
+    bool add(const FixedSizeMeshContainer<T>& extra);
 
 
-    FixedSizeMeshContainer operator+(FixedSizeMeshContainer<T>& extra);
+    FixedSizeMeshContainer& operator=(const FixedSizeMeshContainer<T>& target);
 
-    FixedSizeMeshContainer& operator+=(FixedSizeMeshContainer<T>& extra);
+    FixedSizeMeshContainer operator+(const FixedSizeMeshContainer<T>& extra);
+
+    FixedSizeMeshContainer& operator+=(const FixedSizeMeshContainer<T>& extra);
 
     T* operator[](int i);
+
+    const T* operator[](int i) const;
 
     int getBlocksNumber() const;
 
@@ -42,7 +45,7 @@ public:
     {
         for(int i = 0;i<getBlocksNumber();++i) 
         {
-            for(int j = 0;j < blocksSize;++j)
+            for(int j = 0;j < blockSize;++j)
             {
                 if (j % 2 == 0)
                 {
@@ -64,7 +67,7 @@ public:
     // {
     //     for(int i = 0;i<getBlocksNumber();++i)
     //     {
-    //         for(int j = 0;j < blocksSize;++j)
+    //         for(int j = 0;j < blockSize;++j)
     //         {
     //             out << operator[](i)[j];
     //             out << " ";
@@ -78,16 +81,15 @@ public:
 template <typename T>
 FixedSizeMeshContainer<T>::FixedSizeMeshContainer()
 {
-    blocksSize = 0;
+    blockSize = 0;
 }
 
 template<typename T>
-FixedSizeMeshContainer<T>::FixedSizeMeshContainer(int num):blocksSize(num){};
+FixedSizeMeshContainer<T>::FixedSizeMeshContainer(int num):blockSize(num){};
 
 template <typename T>
-FixedSizeMeshContainer<T>::FixedSizeMeshContainer(const std::vector<T>& source,int blockSize)
+FixedSizeMeshContainer<T>::FixedSizeMeshContainer(const std::vector<T>& source,int blockSize):blockSize(blockSize)
 {
-    blocksSize = blockSize;
     V.reserve(source.size());
     for(typename std::vector<T>::const_iterator it = source.begin(); it != source.end();++it)
     {
@@ -96,10 +98,9 @@ FixedSizeMeshContainer<T>::FixedSizeMeshContainer(const std::vector<T>& source,i
 }
 
 template <typename T>
-FixedSizeMeshContainer<T>::FixedSizeMeshContainer(FixedSizeMeshContainer<T>& source)
+FixedSizeMeshContainer<T>::FixedSizeMeshContainer(const FixedSizeMeshContainer<T>& source):blockSize(source.blockSize)
 {
-    blocksSize = source.getBlockSize();
-    V.resize(source.getBlockSize()*source.getBlocksNumber());//allocating
+    V.resize(source.blockSize*source.getBlocksNumber());//allocating
 
     V = source.V;
 }
@@ -109,9 +110,9 @@ FixedSizeMeshContainer<T>::FixedSizeMeshContainer(FixedSizeMeshContainer<T>& sou
 template <typename T>
 bool FixedSizeMeshContainer<T>::add(const std::vector<T>& extra)
 {
-    if (extra.size() % blocksSize != 0)
+    if (extra.size() % blockSize != 0)
     {
-        std::cerr << "Error: Vector size must be a multiple of " <<  blocksSize << std::endl;
+        std::cerr << "Error: Vector size must be a multiple of " <<  blockSize << std::endl;
         return false;
     } 
     else
@@ -127,9 +128,9 @@ bool FixedSizeMeshContainer<T>::add(const std::vector<T>& extra)
 
 //Add another GridContainer elements to our container
 template <typename T>
-bool FixedSizeMeshContainer<T>::add(FixedSizeMeshContainer<T>& extra)
+bool FixedSizeMeshContainer<T>::add(const FixedSizeMeshContainer<T>& extra)
 {
-    if (extra.getBlockSize() != getBlockSize())
+    if (extra.blockSize != blockSize)
     {
         std::cerr << "Error: Incompatible block sizes!" << std::endl;
         return false;
@@ -137,10 +138,10 @@ bool FixedSizeMeshContainer<T>::add(FixedSizeMeshContainer<T>& extra)
     else
     {
         int odlBlocksNum = getBlocksNumber();
-        V.resize((getBlocksNumber() + extra.getBlocksNumber()) * getBlockSize());
+        V.resize((getBlocksNumber() + extra.getBlocksNumber()) * blockSize);
         for(int i = odlBlocksNum;i<getBlocksNumber();++i)
         {
-            for(int j = 0;j<getBlockSize();++j)
+            for(int j = 0;j<blockSize;++j)
             {
                 operator[](i)[j] = extra[i - odlBlocksNum][j];
             }
@@ -149,8 +150,20 @@ bool FixedSizeMeshContainer<T>::add(FixedSizeMeshContainer<T>& extra)
     }
 }
 
+
 template <typename T>
-FixedSizeMeshContainer<T> FixedSizeMeshContainer<T>::operator+(FixedSizeMeshContainer<T>& extra)
+FixedSizeMeshContainer<T>& FixedSizeMeshContainer<T>::operator=(const FixedSizeMeshContainer<T>& extra)
+{
+    blockSize = extra.blockSize;
+    V.clear();
+    V.resize(extra.blockSize*extra.BlocksNumber);
+    V = extra.V;   
+    return (*this);
+}
+
+
+template <typename T>
+FixedSizeMeshContainer<T> FixedSizeMeshContainer<T>::operator+(const FixedSizeMeshContainer<T>& extra)
 {
     FixedSizeMeshContainer temp_grid(*this);
     temp_grid.add(extra);
@@ -158,7 +171,7 @@ FixedSizeMeshContainer<T> FixedSizeMeshContainer<T>::operator+(FixedSizeMeshCont
 }
 
 template <typename T>
-FixedSizeMeshContainer<T>& FixedSizeMeshContainer<T>::operator+=(FixedSizeMeshContainer<T>& extra)
+FixedSizeMeshContainer<T>& FixedSizeMeshContainer<T>::operator+=(const FixedSizeMeshContainer<T>& extra)
 {
     (*this).add(extra);
     return *this;
@@ -174,21 +187,32 @@ T* FixedSizeMeshContainer<T>::operator[](int i)
     } 
     else
     {
-        return &V[0] + getBlockSize()*i;
+        return &V[0] + blockSize*i;
+    }
+}
+
+template <typename T>
+const T* FixedSizeMeshContainer<T>::operator[](int i) const
+{
+    if (i >= getBlocksNumber())
+    {
+        std::cerr << "Error: Index out of bounds" << std::endl;
+        return nullptr;
+    } 
+    else
+    {
+        return &V[0] + blockSize*i;
     }
 }
 
 template <typename T>
 int FixedSizeMeshContainer<T>::getBlocksNumber() const
 {
-    return V.size()/getBlockSize();
+    return V.size()/blockSize;
 }
 
 template <typename T>
 int FixedSizeMeshContainer<T>::getBlockSize() const
 {
-    return blocksSize;
+    return blockSize;
 }
-
-
-#endif
