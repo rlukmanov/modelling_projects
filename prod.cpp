@@ -242,6 +242,91 @@ GridContainer<int> build_topoNE(ConstGridContainer<double> C, GridContainer<int>
     return topoNE;
 }
 
+// Построение topoSN
+GridContainer<int> build_topoSN(int Nx, int Ny){
+    vector<int> BlockSize;
+    vector<int> temp;
+    GridContainer<int> topoSN(temp, BlockSize);
+
+    for(int i = 0; i < Nx - 1; ++i) {
+        temp.push_back(0);
+        temp.push_back(i);
+        temp.push_back(i + 1);
+        BlockSize.push_back(3);
+    
+        topoSN.add(temp, BlockSize);
+
+        temp.clear();
+        BlockSize.clear();
+    }
+
+    for(int i = 0; i < Ny - 1; ++i) {
+        temp.push_back(1);
+        temp.push_back(Nx - 1 + i);
+        temp.push_back(Nx - 1 + i + 1);
+        BlockSize.push_back(3);
+
+        topoSN.add(temp, BlockSize);
+
+        temp.clear();
+        BlockSize.clear();
+    }
+
+    for(int i = 0; i < Nx - 1; ++i) {
+        temp.push_back(2);
+        temp.push_back(Nx + Ny - 2 + i);
+        temp.push_back(Nx + Ny - 2 + i + 1);
+        BlockSize.push_back(3);
+
+        topoSN.add(temp, BlockSize);
+
+        temp.clear();        
+        BlockSize.clear();
+    }
+
+    for(int i = 0; i < Ny - 1; ++i) {
+        temp.push_back(3);
+        temp.push_back(Nx + Nx + Ny - 3 + i);
+
+        if (i + 1 == Ny - 1) 
+            temp.push_back(0);
+        else
+            temp.push_back(Nx + Nx + Ny - 3 + i + 1);
+        BlockSize.push_back(3);
+
+        topoSN.add(temp, BlockSize);
+
+        temp.clear();        
+        BlockSize.clear();
+    }
+ 
+    return topoSN;
+}
+
+// Построение topoNS
+GridContainer<int> build_topoNS(int Nx, int Ny){
+    vector<int> BlockSize;
+    vector<int> temp;
+    GridContainer<int> topoNS(temp, BlockSize);
+
+    for(int i = 0; i < (Nx + Ny - 2) * 2; ++i) {
+        if (i == 0) 
+            temp.push_back(2*(Nx + Ny - 2) - 1);
+        else 
+            temp.push_back(i - 1);
+
+        temp.push_back(i);
+        BlockSize.push_back(2);
+
+        topoNS.add(temp, BlockSize);
+
+        temp.clear();        
+        BlockSize.clear();
+    }
+
+    return topoNS;
+}
+
 int main(int argc, char **argv) {
     int Nx, Ny, k3, k4, nN, nE;
     double Lx, Ly;
