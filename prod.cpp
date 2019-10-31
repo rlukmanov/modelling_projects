@@ -354,7 +354,6 @@ int main(int argc, char **argv) {
         strcat(filename,".vtk");
         VTKViewer<double,int> VTK(filename);
         VTK.printInVTK(nN,C,topoEN);
-        
     }
     else
     {

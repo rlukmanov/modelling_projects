@@ -4,7 +4,7 @@
 #include <fstream>
 
 #define CELL_TYPE_TRIANGLE 5
-#define CELL_TYPE_RECYANGLE 9
+#define CELL_TYPE_RECTANGLE 9
 
 using namespace std;
 
@@ -49,7 +49,7 @@ public:
             switch(topoEN.getBlockSize(i))
             {
                 case 3: out << CELL_TYPE_TRIANGLE << " ";
-                case 4: out << CELL_TYPE_RECYANGLE << " ";
+                case 4: out << CELL_TYPE_RECTANGLE << " ";
             }
         }
 
