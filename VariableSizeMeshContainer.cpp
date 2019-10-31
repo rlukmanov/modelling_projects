@@ -1,32 +1,37 @@
+#pragma once    
+
 #include <vector>
 #include <iostream>
-#pragma once
+#include <fstream>
+
+
+using namespace std;
 
 //Realizing one-dimensional effective-accessible and storing block vector with matrix interface.
 template <typename T>
 class VariableSizeMeshContainer
 {
     int blockNumber;
-    std::vector<int> IA;//offset vector. Size is (N+1)
-    std::vector<T> V;//main grid vector
+    vector<int> IA;//offset vector. Size is (N+1)
+    vector<T> V;//main grid vector
 
-    int countBlockNumber(int vectorSize, const std::vector<int>& blockSizes);
+    int countBlockNumber(int vectorSize, const vector<int>& blockSizes);
 
-    bool checkSizes(const std::vector<T>& source, const std::vector<int>& blockSizes);
+    bool checkSizes(const vector<T>& source, const vector<int>& blockSizes);
 
-    int count_digit(int x);
+    int count_digit(int x) const;
 
 public:
 
     VariableSizeMeshContainer();
     
     //Creates VariableSizeMeshContainer from source vector.
-    VariableSizeMeshContainer(const std::vector<T>& source, const std::vector<int>& blockSizes);
+    VariableSizeMeshContainer(const vector<T>& source, const vector<int>& blockSizes);
 
     VariableSizeMeshContainer(const VariableSizeMeshContainer<T>& source);
 
     //Can only add elements of vectors which sizes are divided without remainder into {M}
-    bool add(const std::vector<T>& extra,const std::vector<int>& blockSizes);
+    bool add(const vector<T>& extra,const vector<int>& blockSizes);
 
 
     //Add another VariableSizeMeshContainer elements to our container
@@ -46,7 +51,8 @@ public:
 
     int getBlockSize(int i) const;
 
-    // void inline printContainer(std::ostream& out = std::cout)
+    int getTotalSize() const;
+    // void inline printContainer(ostream& out = cout)
     // {
     //     for(int i = 0;i<BlocksNumber;++i)
     //     {
@@ -55,11 +61,11 @@ public:
     //             out << operator[](i)[j];
     //             out << " ";
     //         }
-    //         out << std::endl;
+    //         out << endl;
     //     }
     // }
 
-    void inline printContainer_coord_EN(std::ostream& out = std::cout)
+    void inline printContainer_coord_EN(ostream& out = cout) const
     {
         for(int i = 0;i<blockNumber;++i)
         {
@@ -77,10 +83,11 @@ public:
                     out << ")  ";
                 }
             }
-            out << std::endl;
+            out << endl;
         }
     }
-    void inline printContainer(std::ostream& out = std::cout)
+
+    void inline printContainer(ostream& out = cout) const
     {
         for(int i = 0;i<blockNumber;++i)
         {
@@ -100,13 +107,31 @@ public:
                 out << operator[](i)[j];
                 if (j != getBlockSize(i) - 1)   out << ",";
             }
-            out << std::endl;
+            out << endl;
         }
     }
+
+    void inline printContainer(ofstream& out) const
+    {
+
+        for(int i = 0;i<blockNumber;++i)
+        {
+            out << getBlockSize(i) << " ";
+            
+            for(int j = 0;j < getBlockSize(i);++j)
+            {
+                out << operator[](i)[j];
+                out << " ";
+            }
+            out << " ";
+        }
+        out << endl;
+    }
+
 };
 
 template<typename T>
-int VariableSizeMeshContainer<T>::count_digit(int x)
+int VariableSizeMeshContainer<T>::count_digit(int x) const
 {
     int i = 0;
     if (x == 0) return 1;
@@ -119,7 +144,7 @@ int VariableSizeMeshContainer<T>::count_digit(int x)
 }
 
 template <typename T>
-int VariableSizeMeshContainer<T>::countBlockNumber(int vectorSize, const std::vector<int>& blockSizes)
+int VariableSizeMeshContainer<T>::countBlockNumber(int vectorSize, const vector<int>& blockSizes)
 {
     int blockNum = 0;
     int delta = 0;
@@ -137,10 +162,10 @@ int VariableSizeMeshContainer<T>::countBlockNumber(int vectorSize, const std::ve
 }
 
 template <typename T>
-bool VariableSizeMeshContainer<T>::checkSizes(const std::vector<T>& source, const std::vector<int>& blockSizes)
+bool VariableSizeMeshContainer<T>::checkSizes(const vector<T>& source, const vector<int>& blockSizes)
 {
     unsigned int blSizeElems = 0;
-    for(typename std::vector<int>::const_iterator it = blockSizes.begin(); it != blockSizes.end();++it)
+    for(typename vector<int>::const_iterator it = blockSizes.begin(); it != blockSizes.end();++it)
     {
         blSizeElems += *it;
     }
@@ -157,24 +182,24 @@ VariableSizeMeshContainer<T>::VariableSizeMeshContainer()
 
 //Creates VariableSizeMeshContainer from source vector.
 template <typename T>
-VariableSizeMeshContainer<T>::VariableSizeMeshContainer(const std::vector<T>& source, const std::vector<int>& blockSizes)//number is size of each vector's block
+VariableSizeMeshContainer<T>::VariableSizeMeshContainer(const vector<T>& source, const vector<int>& blockSizes)//number is size of each vector's block
 {
     if (!checkSizes(source,blockSizes))
     {
-        std::cerr << "Error: Incompatible sizes!" << std::endl;
+        cerr << "Error: Incompatible sizes!" << endl;
     }   
     else
     {
         blockNumber = countBlockNumber(source.size(),blockSizes);
         IA.reserve(blockNumber);
         V.reserve(source.size());
-        for(typename std::vector<T>::const_iterator it = source.begin(); it != source.end();++it)
+        for(typename vector<T>::const_iterator it = source.begin(); it != source.end();++it)
         {
             V.push_back(*it);
         }
         int offset = 0;
         IA.push_back(offset);
-        for(typename std::vector<T>::const_iterator it = blockSizes.begin(); it != blockSizes.end();++it)
+        for(typename vector<T>::const_iterator it = blockSizes.begin(); it != blockSizes.end();++it)
         {
             offset += *it;
             IA.push_back(offset);
@@ -196,11 +221,11 @@ VariableSizeMeshContainer<T>::VariableSizeMeshContainer(const VariableSizeMeshCo
 
 //Can only add elements of vectors which sizes are divided without remainder into {M}
 template <typename T>
-bool VariableSizeMeshContainer<T>::add(const std::vector<T>& extra,const std::vector<int>& blockSizes)
+bool VariableSizeMeshContainer<T>::add(const vector<T>& extra,const vector<int>& blockSizes)
 {
     if (!checkSizes(extra,blockSizes))
     {
-        std::cerr << "Error: Incompatible sizes!" << std::endl;
+        cerr << "Error: Incompatible sizes!" << endl;
         return false;
     } 
     else
@@ -208,12 +233,12 @@ bool VariableSizeMeshContainer<T>::add(const std::vector<T>& extra,const std::ve
         this->blockNumber += countBlockNumber(extra.size(),blockSizes);
         V.reserve(V.size() + extra.size());
         IA.reserve(blockNumber + blockSizes.size());
-        for(typename std::vector<T>::const_iterator it = extra.begin(); it != extra.end();++it)
+        for(typename vector<T>::const_iterator it = extra.begin(); it != extra.end();++it)
         {
             V.push_back(*it);
         }
         int offset = IA[IA.size() - 1];
-        for(typename std::vector<T>::const_iterator it = blockSizes.begin(); it != blockSizes.end();++it)
+        for(typename vector<T>::const_iterator it = blockSizes.begin(); it != blockSizes.end();++it)
         {
             offset += *it;
             IA.push_back(offset);
@@ -290,7 +315,7 @@ T* VariableSizeMeshContainer<T>::operator[](int i)
 {
     if (i >= blockNumber)
     {
-        std::cerr << "Error: Index out of bounds" << std::endl;
+        cerr << "Error: Index out of bounds" << endl;
         return nullptr;
     }
     else
@@ -304,7 +329,7 @@ const T* VariableSizeMeshContainer<T>::operator[](int i) const
 {
     if (i >= blockNumber)
     {
-        std::cerr << "Error: Index out of bounds" << std::endl;
+        cerr << "Error: Index out of bounds" << endl;
         return nullptr;
     }
     else
@@ -323,4 +348,10 @@ template <typename T>
 int VariableSizeMeshContainer<T>::getBlockSize(int i) const
 {
     return IA[i+1] - IA[i];
+}
+
+template <typename T>
+int VariableSizeMeshContainer<T>::getTotalSize() const
+{
+    return V.size();
 }

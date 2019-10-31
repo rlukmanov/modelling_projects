@@ -2,3 +2,10 @@
 main.cpp
 .gitignore
 .vscode
+rw_mesh
+plot.vtk
+mesh.vtk
+out.txt
+mesh
+Makefile
+test_vtk

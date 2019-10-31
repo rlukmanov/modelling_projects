@@ -6,6 +6,7 @@
 #include <cstring>
 #include "VariableSizeMeshContainer.cpp"
 #include "FixedSizeMeshContainer.cpp"
+#include "vtkViewer.cpp"
 
 using namespace std;
 
@@ -201,6 +202,67 @@ VariableSizeMeshContainer<int> build_topoEN(FixedSizeMeshContainer<double> C, in
     return topoEN;
 }
 
+// Построение topoSN
+VariableSizeMeshContainer<int> build_topoSN(int Nx, int Ny){
+    vector<int> BlockSize;
+    vector<int> temp;
+    VariableSizeMeshContainer   <int> topoSN(temp, BlockSize);
+
+    for(int i = 0; i < Nx - 1; ++i) {
+        temp.push_back(0);
+        temp.push_back(i);
+        temp.push_back(i + 1);
+        BlockSize.push_back(3);
+    
+        topoSN.add(temp, BlockSize);
+
+        temp.clear();
+        BlockSize.clear();
+    }
+
+    for(int i = 0; i < Ny - 1; ++i) {
+        temp.push_back(1);
+        temp.push_back(Nx - 1 + i);
+        temp.push_back(Nx - 1 + i + 1);
+        BlockSize.push_back(3);
+
+        topoSN.add(temp, BlockSize);
+
+        temp.clear();
+        BlockSize.clear();
+    }
+
+    for(int i = 0; i < Nx - 1; ++i) {
+        temp.push_back(2);
+        temp.push_back(Nx + Ny - 2 + i);
+        temp.push_back(Nx + Ny - 2 + i + 1);
+        BlockSize.push_back(3);
+
+        topoSN.add(temp, BlockSize);
+
+        temp.clear();        
+        BlockSize.clear();
+    }
+
+    for(int i = 0; i < Ny - 1; ++i) {
+        temp.push_back(3);
+        temp.push_back(Nx + Nx + Ny - 3 + i);
+
+        if (i + 1 == Ny - 1) 
+            temp.push_back(0);
+        else
+            temp.push_back(Nx + Nx + Ny - 3 + i + 1);
+        BlockSize.push_back(3);
+
+        topoSN.add(temp, BlockSize);
+
+        temp.clear();        
+        BlockSize.clear();
+    }
+ 
+    return topoSN;
+}
+
 // Построение topoNE
 VariableSizeMeshContainer<int> build_topoNE(FixedSizeMeshContainer<double> C, VariableSizeMeshContainer<int> topoEN, int Nx, int Ny, int k3, int k4, int nE){
     vector<int> BlockSize;
@@ -210,7 +272,7 @@ VariableSizeMeshContainer<int> build_topoNE(FixedSizeMeshContainer<double> C, Va
     int count_mas[nN];
     int count_i_mas[nN];
 
-    for (int i = 0; i < nN; i++){
+    for (int i = 0; i < nN; i++){   
         count_mas[i] = 0;
         count_i_mas[i] = 0;
     }
@@ -242,6 +304,7 @@ VariableSizeMeshContainer<int> build_topoNE(FixedSizeMeshContainer<double> C, Va
     return topoNE;
 }
 
+
 int main(int argc, char **argv) {
     int Nx, Ny, k3, k4, nN, nE;
     double Lx, Ly;
@@ -250,7 +313,7 @@ int main(int argc, char **argv) {
     VariableSizeMeshContainer<int> topoNE;
 
     if (argc == 2){
-        if (!strcmp(argv[1],"-help")) {
+        if (!strcmp(argv[1],"--help")) {
             cout << "Введите длину сетки (Lx),\n";
             cout << "Введите ширину сетки (Ly),\n";
             cout << "Введите количество точек (Nx),\n";
@@ -260,7 +323,7 @@ int main(int argc, char **argv) {
             return 0;
         }
     }
-    else if (argc == 7) {
+    else if (argc >= 7) {
         Lx = atoi(argv[1]);
         Ly = atoi(argv[2]);
         Nx = atoi(argv[3]);
@@ -273,34 +336,42 @@ int main(int argc, char **argv) {
         }
     }
     else {
-        cout << "Недостаточное число аргументов. Попробуйте -help\n";
-        return 0;
+        cout << "Недостаточное число аргументов. Попробуйте --help\n";
+        return 2;
     }
 
     nN = Nx * Ny;
     nE = num_elem(Nx, Ny, k3, k4);
 
-    cout << "\nМассив координат: \n";
-    cout << "x | y\n";
+    
     build_coord(C, Lx, Ly, Nx, Ny);
-    C.printContainer();
-
-    cout << "\nПолученная сетка: ";
-    draw_grid(Nx - 1, Ny - 1, k3, k4);
-
-    cout << "topoEN: \n";
-    cout << "Номер элемента | Номера точек \n";
     topoEN = build_topoEN(C, Nx, Ny, k3, k4, nE);
-    topoEN.printContainer();
-
-    cout << "\ntopoNE: \n";
-    cout << "Номер точки    | Номера элементов \n";
     topoNE = build_topoNE(C,topoEN,Nx,Ny,k3,k4,nE);
-    topoNE.printContainer();
-
-    cout << "\nКоличество точек: " << nN << '\n';
-    cout << "Количество элементов: " << nE;
-    cout << "\n";
-
+    
+    if (argc == 8)
+    {
+        char* filename = argv[7];
+        strcat(filename,".vtk");
+        VTKViewer<double,int> VTK(filename);
+        VTK.printInVTK(nN,C,topoEN);
+        
+    }
+    else
+    {
+        cout << "\nМассив координат: \n";
+        cout << "x | y\n";
+        cout << "\nПолученная сетка: ";
+        C.printContainer();
+        draw_grid(Nx - 1, Ny - 1, k3, k4);
+        cout << "topoEN: \n";
+        cout << "Номер элемента | Номера точек \n";
+        topoEN.printContainer();
+        cout << "\ntopoNE: \n";
+        cout << "Номер точки    | Номера элементов \n";
+        topoNE.printContainer();
+        cout << "\nКоличество точек: " << nN << '\n';
+        cout << "Количество элементов: " << nE;
+        cout << "\n";
+    }
     return 0;
 }

@@ -1,6 +1,11 @@
+#pragma once
+
 #include <vector>
 #include <iostream>
-#pragma once
+#include <fstream>
+
+
+using namespace std;
 
 //Realizing one-dimensional effective-accessible and storing block vector with matrix interface.
 template <typename T>
@@ -8,7 +13,7 @@ class FixedSizeMeshContainer
 {
 
     int blockSize;
-    std::vector<T> V;//main grid vector
+    vector<T> V;//main grid vector
 
 public:
 
@@ -16,12 +21,12 @@ public:
 
     FixedSizeMeshContainer(int num);
 
-    FixedSizeMeshContainer(const std::vector<T>& source,int blockSize);
+    FixedSizeMeshContainer(const vector<T>& source,int blockSize);
 
     FixedSizeMeshContainer(const FixedSizeMeshContainer<T>& source);
 
     //Can only add elements of vectors which sizes are divided without remainder into {M}
-    bool add(const std::vector<T>& extra);
+    bool add(const vector<T>& extra);
 
     //Add another GridContainer elements to our container
     bool add(const FixedSizeMeshContainer<T>& extra);
@@ -41,7 +46,9 @@ public:
 
     int getBlockSize() const;
 
-    void inline printContainer(std::ostream& out = std::cout)
+    int getTotalSize() const;
+
+    void inline printContainer(ostream& out = cout) const
     {
         for(int i = 0;i<getBlocksNumber();++i) 
         {
@@ -49,32 +56,34 @@ public:
             {
                 if (j % 2 == 0)
                 {
-                    out << "(";
                     out << operator[](i)[j];
-                    out << ", ";
+                    out << " ";
                 }
                 else
                 {
                     out << operator[](i)[j];
-                    out << ")  ";
                 }
             }
-            out << std::endl;
+            out << endl;
         }
     }
 
-    // void inline printContainer(std::ostream& out = std::cout)
-    // {
-    //     for(int i = 0;i<getBlocksNumber();++i)
-    //     {
-    //         for(int j = 0;j < blockSize;++j)
-    //         {
-    //             out << operator[](i)[j];
-    //             out << " ";
-    //         }
-    //         out << std::endl;
-    //     }
-    // }
+    void inline printContainer(ofstream& out) const
+    {
+
+        for(int i = 0;i<getBlocksNumber();++i) 
+        {
+            for(int j = 0;j < blockSize;++j)
+            {
+                out << operator[](i)[j];
+                out << " ";
+            }
+            out << " ";
+        }
+
+        out << endl;
+    }
+
 };
 
 //default constructor
@@ -88,10 +97,10 @@ template<typename T>
 FixedSizeMeshContainer<T>::FixedSizeMeshContainer(int num):blockSize(num){};
 
 template <typename T>
-FixedSizeMeshContainer<T>::FixedSizeMeshContainer(const std::vector<T>& source,int blockSize):blockSize(blockSize)
+FixedSizeMeshContainer<T>::FixedSizeMeshContainer(const vector<T>& source,int blockSize):blockSize(blockSize)
 {
     V.reserve(source.size());
-    for(typename std::vector<T>::const_iterator it = source.begin(); it != source.end();++it)
+    for(typename vector<T>::const_iterator it = source.begin(); it != source.end();++it)
     {
         V.push_back(*it);
     }
@@ -108,17 +117,17 @@ FixedSizeMeshContainer<T>::FixedSizeMeshContainer(const FixedSizeMeshContainer<T
 
 //Can only add elements of vectors which sizes are divided without remainder into {M}
 template <typename T>
-bool FixedSizeMeshContainer<T>::add(const std::vector<T>& extra)
+bool FixedSizeMeshContainer<T>::add(const vector<T>& extra)
 {
     if (extra.size() % blockSize != 0)
     {
-        std::cerr << "Error: Vector size must be a multiple of " <<  blockSize << std::endl;
+        cerr << "Error: Vector size must be a multiple of " <<  blockSize << endl;
         return false;
     } 
     else
     {
         V.reserve(extra.size());
-        for(typename std::vector<T>::const_iterator it = extra.begin(); it != extra.end();++it)  
+        for(typename vector<T>::const_iterator it = extra.begin(); it != extra.end();++it)  
         {
             V.push_back(*it);
         }
@@ -132,7 +141,7 @@ bool FixedSizeMeshContainer<T>::add(const FixedSizeMeshContainer<T>& extra)
 {
     if (extra.blockSize != blockSize)
     {
-        std::cerr << "Error: Incompatible block sizes!" << std::endl;
+        cerr << "Error: Incompatible block sizes!" << endl;
         return false;
     }
     else
@@ -182,7 +191,7 @@ T* FixedSizeMeshContainer<T>::operator[](int i)
 {
     if (i >= getBlocksNumber())
     {
-        std::cerr << "Error: Index out of bounds" << std::endl;
+        cerr << "Error: Index out of bounds" << endl;
         return nullptr;
     } 
     else
@@ -196,7 +205,7 @@ const T* FixedSizeMeshContainer<T>::operator[](int i) const
 {
     if (i >= getBlocksNumber())
     {
-        std::cerr << "Error: Index out of bounds" << std::endl;
+        cerr << "Error: Index out of bounds" << endl;
         return nullptr;
     } 
     else
@@ -215,4 +224,10 @@ template <typename T>
 int FixedSizeMeshContainer<T>::getBlockSize() const
 {
     return blockSize;
+}
+
+template <typename T>
+int FixedSizeMeshContainer<T>::getTotalSize() const
+{
+     return V.size();
 }
