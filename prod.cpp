@@ -4,8 +4,10 @@
 #include <vector>
 #include <cstdlib>
 #include <cstring>
+#include <omp.h>
 #include "GridContainer.cpp"
 #include "ConstGridContainer.cpp"
+
 
 using namespace std;
 
@@ -334,7 +336,72 @@ int main(int argc, char **argv) {
     GridContainer<int> topoEN;
     GridContainer<int> topoNE;
 
-    if (argc == 2){
+    double start, end;
+
+    if ((argc == 2) && (!strcmp(argv[1], "-help"))) {
+    	cout << "Usage:\n-gen Lx Ly Nx Ny k3 k4\n\t or\n-file filename" << endl;
+    	return 1;
+    };
+    if ((argc == 8) && (!strcmp(argv[1], "-gen"))){
+    	Lx = atoi(argv[2]);
+        Ly = atoi(argv[3]);
+        Nx = atoi(argv[4]);
+        Ny = atoi(argv[5]);
+        k3 = atoi(argv[6]);
+        k4 = atoi(argv[7]);
+
+        nN = Nx * Ny;
+	    nE = num_elem(Nx, Ny, k3, k4);
+
+	    start = omp_get_wtime();
+	    build_coord(C, Lx, Ly, Nx, Ny);
+		end = omp_get_wtime();
+		cout << "build C: " << end - start << "sec" << endl;
+
+		start = omp_get_wtime();
+	    topoEN = build_topoEN(C, Nx, Ny, k3, k4, nE);
+	    end = omp_get_wtime();
+	    cout << "build topoEN: " << end - start << "sec" << endl;
+
+	    start = omp_get_wtime();
+	    topoNE = build_topoNE(C,topoEN,Nx,Ny,k3,k4,nE);
+		end = omp_get_wtime();
+	    cout << "build topoNE: " << end - start << "sec" << endl;
+    }
+
+    else if ( (argc == 3) && (!strcmp(argv[1], "-file")) ) {
+    	//Считать сетку из файла
+    }
+    else {
+    	cout << "Use -help" << endl;
+    	return 1;
+    }
+
+    string req, toponame;
+    cout << "Аbilities:\n\toutput_mesh <filename>\n\toutput <toponame> <filename>\n\tprint <toponame>\n\tq - quit\n";
+    
+    while(true){
+    	cin >> req;
+
+    	if (req == "output_mesh"){
+    		//вывести сетку в файл
+    	}
+    	else if (req == "output"){
+    		cin >> toponame;
+    		//напечатать топологию в файл
+    	}
+    	else if (req == "print"){
+    		cin >> toponame;
+    		if (toponame == "topoEN") topoEN.printContainer();
+    		if (toponame == "topoNE") topoNE.printContainer();
+    		if (toponame == "C") C.printContainer();
+    		//if (toponame == "topoSN")
+    		//if (toponame == "topoNS")
+    	}
+    	else if (req == "q") return 0;
+    }
+
+    /*if (argc == 2){
         if (!strcmp(argv[1],"-help")) {
             cout << "Введите длину сетки (Lx),\n";
             cout << "Введите ширину сетки (Ly),\n";
@@ -387,5 +454,5 @@ int main(int argc, char **argv) {
     cout << "Количество элементов: " << nE;
     cout << "\n";
 
-    return 0;
+    return 0;*/
 }
