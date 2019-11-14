@@ -1,376 +1,126 @@
 #include <iostream>
+#include <fstream>
 #include <list>
 #include <iterator>
 #include <vector>
-#include <cstdlib>
+#include <string.h>
+#include <omp.h>
 #include <cstring>
+#include <cstdlib>
+#include "toposBuild.cpp"
 #include "VariableSizeMeshContainer.cpp"
 #include "FixedSizeMeshContainer.cpp"
-#include "vtkViewer.cpp"
+#include "vtkGenerator.cpp"
+#include "meshIO.cpp"
 
 using namespace std;
 
-// Отрисовка сетки
-void draw_grid(int Nx, int Ny, int k3, int k4){
-    int cur_number_type = k3 > 0 ? k3:k4; // Текущее количество элементов
-    int type_elem = k3 > 0 ? 0:1; // Тип элемента. 0 - треугольник, 1 квадрат
-    int prev_cur_number = cur_number_type;
-    int prev_type = type_elem;
-    char symb = ' ';
-
-    cout << "\n";
-
-    for (int i = 0; i < Nx; i++) {
-        cout << " ";
-        for (int j = 0; j < 8; j++)
-            cout << "_";
-    }
-    cout << "\n";
-
-    for (int cur_line = 0; cur_line < Ny; cur_line++) {
-        symb = ' ';
-
-        for (int cur_str = 0; cur_str < 4; cur_str++) {
-            cout << "|";
-            if (cur_str == 3)
-                symb = '_';
-
-            type_elem = prev_type;
-            cur_number_type = type_elem == 0 ? k3:k4;
-            if ((cur_line != 0) && (prev_cur_number != 0 )){
-                cur_number_type = prev_cur_number;
-            }
-
-            for (int i = 0; i < Nx; i++) {
-                for (int j = 0; j < 7 - 2 * cur_str; j++)
-                    cout << symb;
-                if (type_elem == 0) {
-                    cout << "̸"; //U+0338
-                }
-                else {
-                    cout << symb;
-                }
-                for (int j = 0; j < 2 * cur_str; j++)
-                    cout << symb;
-                cout << "|";
-
-                cur_number_type--;
-                if (cur_number_type == 0){
-                    type_elem = (type_elem + 1) % 2;
-                    cur_number_type = type_elem == 0 ? k3:k4;
-                    if (cur_number_type == 0) {
-                        type_elem = (type_elem + 1) % 2;
-                        cur_number_type = type_elem == 0 ? k3:k4;
-                    }
-                }
-            }
-            cout << "\n";
-        }
-        prev_cur_number = cur_number_type;
-        prev_type = type_elem;
-    }
-
-    cout << "\n";
-}
-
-// Подсчет количества элементов
-int num_elem(int Nx, int Ny, int k3, int k4){
-    int nE;
-
-    nE = (2 * k3 + k4) * int(((Nx - 1) * (Ny - 1)) / (k3 + k4));
-    if ((((Nx - 1) * (Ny - 1)) % (k3 + k4)) >= k3)
-        nE += 2 * k3 + (((Nx - 1) * (Ny - 1)) % (k3 + k4)) - k3;
-    else
-        nE += 2 * (((Nx - 1) * (Ny - 1)) % (k3 + k4));
-
-    return nE;
-}
-
-// Построение массива координат
-void build_coord(FixedSizeMeshContainer<double>& C, double Lx, double Ly, int Nx, int Ny){
-    vector<double> temp;
-
-    for (int i = 0; i < Ny; i++) {
-        for (int j = 0; j < Nx; j++) {
-            temp.push_back((Lx / (Nx - 1)) * j);
-            temp.push_back((Ly / (Ny - 1)) * i);
-            C.add(temp);
-            temp.clear();
-        }
-    }
-}
-
-// Построение topoEN
-VariableSizeMeshContainer<int> build_topoEN(FixedSizeMeshContainer<double> C, int Nx, int Ny, int k3, int k4, int nE){
-    vector<int> BlockSize;
-    BlockSize.push_back(0);
-    vector<int> temp;
-    VariableSizeMeshContainer<int> topoEN;
-    bool figure = k3 > 0 ? false : true; // 0 - тругольник, 1 - квадрат
-    int count_figure = figure ? k4 : k3;
-    int EN_i = 0;
-    int temp_nE;
-
-    temp_nE = nE;
-    topoEN.add(temp, BlockSize);
-    BlockSize.clear();
-
-    while (temp_nE>0) {
-        if (!figure) {
-            //temp.push_back(C[EN_i][0]);
-            //temp.push_back(C[EN_i][1]);
-
-            //temp.push_back(C[EN_i + 1][0]);
-            //temp.push_back(C[EN_i + 1][1]);
-
-            //temp.push_back(C[EN_i + Nx][0]);
-            //temp.push_back(C[EN_i + Nx][1]);
-
-            temp.push_back(EN_i);
-            temp.push_back(EN_i+1);
-            temp.push_back(EN_i+Nx);
-            BlockSize.push_back(3);
-
-
-            //BlockSize.push_back(6);
-
-            topoEN.add(temp, BlockSize);
-            temp.clear();
-            BlockSize.clear();
-
-
-            //temp.push_back(C[EN_i + 1][0]);
-            //temp.push_back(C[EN_i + 1][1]);
-
-            //temp.push_back(C[EN_i + 1 + Nx][0]);
-            //temp.push_back(C[EN_i + 1 + Nx][1]);
-
-            //temp.push_back(C[EN_i + Nx][0]);
-            //temp.push_back(C[EN_i + Nx][1]);
-
-            //BlockSize.push_back(6);
-
-            temp.push_back(EN_i+1);
-            temp.push_back(EN_i+1+Nx);
-            temp.push_back(EN_i+Nx);
-            BlockSize.push_back(3);
-
-            topoEN.add(temp, BlockSize);
-            temp.clear();
-            BlockSize.clear();
-            temp_nE-=2;
-        } else {
-            //temp.push_back(C[EN_i][0]);
-            //temp.push_back(C[EN_i][1]);
-
-            //temp.push_back(C[EN_i + 1][0]);
-            //temp.push_back(C[EN_i + 1][1]);
-
-            //temp.push_back(C[EN_i + 1 + Nx][0]);
-            //temp.push_back(C[EN_i + 1 + Nx][1]);
-
-            //temp.push_back(C[EN_i + Nx][0]);
-            //temp.push_back(C[EN_i + Nx][1]);
-
-            //BlockSize.push_back(8);
-
-            temp.push_back(EN_i);
-            temp.push_back(EN_i+1);
-            temp.push_back(EN_i+1+Nx);
-            temp.push_back(EN_i+Nx);
-            BlockSize.push_back(4);
-
-            topoEN.add(temp, BlockSize);
-            temp.clear();
-            BlockSize.clear();
-            temp_nE--;
-        }
-        count_figure--;
-        if (count_figure == 0) {
-            figure = !figure;
-            count_figure = figure ? k4 : k3;
-            if (count_figure == 0) {
-                figure = !figure;
-                count_figure = figure ? k4 : k3;
-            }
-        }
-        EN_i++;
-        if (EN_i % Nx == Nx - 1)
-            EN_i++;
-    }
-
-    return topoEN;
-}
-
-// Построение topoSN
-VariableSizeMeshContainer<int> build_topoSN(int Nx, int Ny){
-    vector<int> BlockSize;
-    vector<int> temp;
-    VariableSizeMeshContainer   <int> topoSN(temp, BlockSize);
-
-    for(int i = 0; i < Nx - 1; ++i) {
-        temp.push_back(0);
-        temp.push_back(i);
-        temp.push_back(i + 1);
-        BlockSize.push_back(3);
-    
-        topoSN.add(temp, BlockSize);
-
-        temp.clear();
-        BlockSize.clear();
-    }
-
-    for(int i = 0; i < Ny - 1; ++i) {
-        temp.push_back(1);
-        temp.push_back(Nx - 1 + i);
-        temp.push_back(Nx - 1 + i + 1);
-        BlockSize.push_back(3);
-
-        topoSN.add(temp, BlockSize);
-
-        temp.clear();
-        BlockSize.clear();
-    }
-
-    for(int i = 0; i < Nx - 1; ++i) {
-        temp.push_back(2);
-        temp.push_back(Nx + Ny - 2 + i);
-        temp.push_back(Nx + Ny - 2 + i + 1);
-        BlockSize.push_back(3);
-
-        topoSN.add(temp, BlockSize);
-
-        temp.clear();        
-        BlockSize.clear();
-    }
-
-    for(int i = 0; i < Ny - 1; ++i) {
-        temp.push_back(3);
-        temp.push_back(Nx + Nx + Ny - 3 + i);
-
-        if (i + 1 == Ny - 1) 
-            temp.push_back(0);
-        else
-            temp.push_back(Nx + Nx + Ny - 3 + i + 1);
-        BlockSize.push_back(3);
-
-        topoSN.add(temp, BlockSize);
-
-        temp.clear();        
-        BlockSize.clear();
-    }
- 
-    return topoSN;
-}
-
-// Построение topoNE
-VariableSizeMeshContainer<int> build_topoNE(FixedSizeMeshContainer<double> C, VariableSizeMeshContainer<int> topoEN, int Nx, int Ny, int k3, int k4, int nE){
-    vector<int> BlockSize;
-    vector<int> temp;
-    VariableSizeMeshContainer<int> topoNE(temp, BlockSize);
-    int nN = Nx * Ny;
-    int count_mas[nN];
-    int count_i_mas[nN];
-
-    for (int i = 0; i < nN; i++){   
-        count_mas[i] = 0;
-        count_i_mas[i] = 0;
-    }
-
-    //Проход для подсчета количества встреч каждой точки
-    for (int i = 0; i < nE; i++){
-        for (int j = 0; j < topoEN.getBlockSize(i); j++) {
-            count_mas[topoEN[i][j]]++;
-            count_i_mas[topoEN[i][j]]++;
-        }
-    }
-
-    for (int i = 0; i < nN; i++){
-        BlockSize.push_back(count_mas[i]);
-        for (int j = 0; j < count_mas[i]; j++)
-            temp.push_back(0);
-        topoNE.add(temp,BlockSize);
-        BlockSize.clear();
-        temp.clear();
-    }
-
-    for (int i = 0; i < nE; i++){
-        for (int j = 0; j < topoEN.getBlockSize(i); j++){
-            topoNE[topoEN[i][j]][count_mas[topoEN[i][j]] - count_i_mas[topoEN[i][j]]] = i;
-            count_i_mas[topoEN[i][j]]--;
-        }
-    }
-
-    return topoNE;
-}
-
-
 int main(int argc, char **argv) {
+
     int Nx, Ny, k3, k4, nN, nE;
     double Lx, Ly;
-    FixedSizeMeshContainer<double> C(2);
+    FixedSizeMeshContainer<double> C;
     VariableSizeMeshContainer<int> topoEN;
     VariableSizeMeshContainer<int> topoNE;
+    VariableSizeMeshContainer<int> topoSN;
+    VariableSizeMeshContainer<int> topoNS;
+    int type = 0;
 
-    if (argc == 2){
-        if (!strcmp(argv[1],"--help")) {
-            cout << "Введите длину сетки (Lx),\n";
-            cout << "Введите ширину сетки (Ly),\n";
-            cout << "Введите количество точек (Nx),\n";
-            cout << "Введите количество точек (Ny),\n";
-            cout << "Введите количество элементов с треугольным элементом (идут подряд) (k3),\n";
-            cout << "Введите количество элементов с квадратным элементом (идут подряд) (k4).\n";
-            return 0;
+    double start, end;
+
+    if ((argc == 1) || !((argc == 3) || (argc == 9) || (argc == 10))){
+        cout << "Usage:\n\t-gen Lx Ly Nx Ny k3 k4 | -file\n\t-print (to stdout)| -out (to file) | -vtk \"filename\" " << endl;
+        return 0;
+    }
+    try {
+//creating mesh
+        if (!strcmp(argv[1], "-gen")){
+            Lx = atoi(argv[2]);
+            Ly = atoi(argv[3]);
+            Nx = atoi(argv[4]);
+            Ny = atoi(argv[5]);
+            k3 = atoi(argv[6]);
+            k4 = atoi(argv[7]);
+            if ((k3*k3 + k4*k4 == 0) || (k3 < 0) || (k4 < 0)) throw 1;
+
+            C.setBlockSize(2);
+            nN = Nx *  Ny;
+            nE = num_elem(Nx, Ny, k3, k4);
+
+            cout << "Time:" << endl;
+
+            start = omp_get_wtime();
+            topos::build_coord(C, Lx, Ly, Nx, Ny);
+            end = omp_get_wtime();
+            cout << "\tC: " << end - start << " sec" << endl;
+
+            start = omp_get_wtime();
+            topoEN = topos::build_topoEN(C, Nx, Ny, k3, k4, nE);
+            end = omp_get_wtime();
+            cout << "\ttopoEN: " << end - start << " sec" << endl;
+
+            start = omp_get_wtime();
+            topoNE = topos::build_topoNE(topoEN);
+            end = omp_get_wtime();
+            cout << "\ttopoNE: " << end - start << " sec" << endl;
+
+            start = omp_get_wtime();
+            topoSN = topos::build_topoSN(Nx,Ny);
+            end = omp_get_wtime();
+            cout << "\ttopoSN: " << end - start << " sec" << endl;
+
+            start = omp_get_wtime();
+            topoNS = topos::build_topoNS(topoSN);
+            end = omp_get_wtime();
+            cout << "\ttopoNS: " << end - start << " sec" << endl;
         }
-    }
-    else if (argc >= 7) {
-        Lx = atoi(argv[1]);
-        Ly = atoi(argv[2]);
-        Nx = atoi(argv[3]);
-        Ny = atoi(argv[4]);
-        k3 = atoi(argv[5]);
-        k4 = atoi(argv[6]);
-        if (k3 * k3 + k4 * k4 == 0){
-            cout << "Введите ненулевое количество треугольников и квадратов\n";
-            return 1;
+        else if (!strcmp(argv[1], "-file")){
+            if (read_file(C, topoEN,topoSN))
+                throw 1;
+            type = 1;
+            topoNE = topos::build_topoNE(topoEN);
+            topoNS = topos::build_topoNS(topoSN);
         }
-    }
-    else {
-        cout << "Недостаточное число аргументов. Попробуйте --help\n";
-        return 2;
-    }
+        else {throw 1;}
 
-    nN = Nx * Ny;
-    nE = num_elem(Nx, Ny, k3, k4);
+        cout << "\nMemory:\n" << endl;
+        cout << "\tC: " <<  sizeof(C) * sizeof(double) << " bytes" << endl;
+        cout << "\ttopoEN: " <<  sizeof(topoEN) * sizeof(int) << " bytes" << endl;
+        cout << "\ttopoNE: " <<  sizeof(topoNE) * sizeof(int) << " bytes" << endl;
+        cout << "\ttopoSN: " <<  sizeof(topoSN) * sizeof(int) << " bytes" << endl;
+        cout << "\ttopoNS: " <<  sizeof(topoNS) * sizeof(int) << " bytes" << endl;
 
-    
-    build_coord(C, Lx, Ly, Nx, Ny);
-    topoEN = build_topoEN(C, Nx, Ny, k3, k4, nE);
-    topoNE = build_topoNE(C,topoEN,Nx,Ny,k3,k4,nE);
-    
-    if (argc == 8)
-    {
-        char* filename = argv[7];
-        strcat(filename,".vtk");
-        VTKViewer<double,int> VTK(filename);
-        VTK.printInVTK(nN,C,topoEN);
+
+//output mesh
+        if (!strcmp(argv[argc-2], "-vtk"))
+        {
+            char* filename = argv[argc-1];
+            strcat(filename,".vtk");
+            vtkGenerator<double,int> vtk(filename);
+            vtk.printInVTK(nN,C,topoEN);
+        }
+        else if (!strcmp(argv[argc-1], "-out")){
+            write_file(C,topoEN,topoSN);
+        }
+        else if (!strcmp(argv[argc-1], "-print")){
+            cout << "\nCoordinates:\n" << endl;
+            C.printContainer();
+            cout << "\nTopoEN:\n" << endl;
+            topoEN.printContainer();
+            cout << "\nTopoNE:\n" << endl;
+            topoNE.printContainer();
+            cout << "\nTopoSN:\n" << endl;
+            topoSN.printContainer();
+            cout << "\nTopoNS:\n" << endl;
+            topoNS.printContainer();
+            if (!type) draw_grid(Nx - 1, Ny - 1, k3, k4);
+        }
+        else {throw 1;}
     }
-    else
-    {
-        cout << "\nМассив координат: \n";
-        cout << "x | y\n";
-        cout << "\nПолученная сетка: ";
-        C.printContainer();
-        draw_grid(Nx - 1, Ny - 1, k3, k4);
-        cout << "topoEN: \n";
-        cout << "Номер элемента | Номера точек \n";
-        topoEN.printContainer();
-        cout << "\ntopoNE: \n";
-        cout << "Номер точки    | Номера элементов \n";
-        topoNE.printContainer();
-        cout << "\nКоличество точек: " << nN << '\n';
-        cout << "Количество элементов: " << nE;
-        cout << "\n";
+    catch(...){
+        cout << "Error!" << endl;
+        return 1;
     }
+    
     return 0;
 }

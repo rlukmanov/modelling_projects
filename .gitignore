@@ -4,7 +4,7 @@ main.cpp
 .vscode
 rw_mesh
 plot.vtk
-mesh.vtk
+out.vtk
 out.txt
 mesh
 Makefile

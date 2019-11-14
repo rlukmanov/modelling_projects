@@ -52,18 +52,6 @@ public:
     int getBlockSize(int i) const;
 
     int getTotalSize() const;
-    // void inline printContainer(ostream& out = cout)
-    // {
-    //     for(int i = 0;i<BlocksNumber;++i)
-    //     {
-    //         for(int j = 0;j < getBlockSize(i);++j)
-    //         {
-    //             out << operator[](i)[j];
-    //             out << " ";
-    //         }
-    //         out << endl;
-    //     }
-    // }
 
     void inline printContainer_coord_EN(ostream& out = cout) const
     {
@@ -117,7 +105,7 @@ public:
         for(int i = 0;i<blockNumber;++i)
         {
             out << getBlockSize(i) << " ";
-            
+
             for(int j = 0;j < getBlockSize(i);++j)
             {
                 out << operator[](i)[j];

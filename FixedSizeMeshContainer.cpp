@@ -25,6 +25,8 @@ public:
 
     FixedSizeMeshContainer(const FixedSizeMeshContainer<T>& source);
 
+    void setBlockSize(unsigned int newSize);
+
     //Can only add elements of vectors which sizes are divided without remainder into {M}
     bool add(const vector<T>& extra);
 
@@ -42,7 +44,7 @@ public:
 
     const T* operator[](int i) const;
 
-    int getBlocksNumber() const;
+    int getBlockNumber() const;
 
     int getBlockSize() const;
 
@@ -50,7 +52,7 @@ public:
 
     void inline printContainer(ostream& out = cout) const
     {
-        for(int i = 0;i<getBlocksNumber();++i) 
+        for(int i = 0;i<getBlockNumber();++i) 
         {
             for(int j = 0;j < blockSize;++j)
             {
@@ -71,13 +73,14 @@ public:
     void inline printContainer(ofstream& out) const
     {
 
-        for(int i = 0;i<getBlocksNumber();++i) 
+        for(int i = 0;i<getBlockNumber();++i) 
         {
             for(int j = 0;j < blockSize;++j)
             {
                 out << operator[](i)[j];
                 out << " ";
             }
+            out << 0 << " ";//z - coordinate(for paraview)
             out << " ";
         }
 
@@ -109,11 +112,16 @@ FixedSizeMeshContainer<T>::FixedSizeMeshContainer(const vector<T>& source,int bl
 template <typename T>
 FixedSizeMeshContainer<T>::FixedSizeMeshContainer(const FixedSizeMeshContainer<T>& source):blockSize(source.blockSize)
 {
-    V.resize(source.blockSize*source.getBlocksNumber());//allocating
+    V.resize(source.blockSize*source.getBlockNumber());//allocating
 
     V = source.V;
 }
 
+template <typename T>
+void FixedSizeMeshContainer<T>::setBlockSize(unsigned int newSize)
+{
+    blockSize = newSize;
+}
 
 //Can only add elements of vectors which sizes are divided without remainder into {M}
 template <typename T>
@@ -146,9 +154,9 @@ bool FixedSizeMeshContainer<T>::add(const FixedSizeMeshContainer<T>& extra)
     }
     else
     {
-        int odlBlocksNum = getBlocksNumber();
-        V.resize((getBlocksNumber() + extra.getBlocksNumber()) * blockSize);
-        for(int i = odlBlocksNum;i<getBlocksNumber();++i)
+        int odlBlocksNum = getBlockNumber();
+        V.resize((getBlockNumber() + extra.getBlockNumber()) * blockSize);
+        for(int i = odlBlocksNum;i<getBlockNumber();++i)
         {
             for(int j = 0;j<blockSize;++j)
             {
@@ -189,7 +197,7 @@ FixedSizeMeshContainer<T>& FixedSizeMeshContainer<T>::operator+=(const FixedSize
 template <typename T>
 T* FixedSizeMeshContainer<T>::operator[](int i)
 {
-    if (i >= getBlocksNumber())
+    if (i >= getBlockNumber())
     {
         cerr << "Error: Index out of bounds" << endl;
         return nullptr;
@@ -203,7 +211,7 @@ T* FixedSizeMeshContainer<T>::operator[](int i)
 template <typename T>
 const T* FixedSizeMeshContainer<T>::operator[](int i) const
 {
-    if (i >= getBlocksNumber())
+    if (i >= getBlockNumber())
     {
         cerr << "Error: Index out of bounds" << endl;
         return nullptr;
@@ -215,7 +223,7 @@ const T* FixedSizeMeshContainer<T>::operator[](int i) const
 }
 
 template <typename T>
-int FixedSizeMeshContainer<T>::getBlocksNumber() const
+int FixedSizeMeshContainer<T>::getBlockNumber() const
 {
     return V.size()/blockSize;
 }
