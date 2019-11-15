@@ -12,7 +12,6 @@ using namespace std;
 template<typename M,typename N>
 class vtkGenerator
 {
-
     ofstream out;
 
 public:

@@ -11,7 +11,7 @@
 #include "VariableSizeMeshContainer.cpp"
 #include "FixedSizeMeshContainer.cpp"
 #include "vtkGenerator.cpp"
-#include "meshIO.cpp"
+#include "IO.cpp"
 
 using namespace std;
 
@@ -29,12 +29,27 @@ int main(int argc, char **argv) {
     double start, end;
 
     if ((argc == 1) || !((argc == 3) || (argc == 9) || (argc == 10))){
-        cout << "Usage:\n\t-gen Lx Ly Nx Ny k3 k4 | -file\n\t-print (to stdout)| -out (to file) | -vtk \"filename\" " << endl;
+        cout << "Usage:  --gen <Lx> <Ly> <Nx> <Ny> <k3> <k4> | --file \n\t--print | --out (<path>) | --vtk <filename>" << endl;
+        cout << "Commands:" << endl;
+        cout << "\t--gen                     Generate mesh" << endl; 
+        cout << "\t--file                    Read mesh from file(in current directory)" << endl; 
+        cout << "\t--print                   Print mesh to stdout" << endl;
+        cout << "\t--out                     Print mesh to file" << endl;
+        cout << "\t--vtk                     Print mesh in \" .vtk \" format to file" << endl;
+        cout << "Options:" << endl; 
+        cout << "\t<Lx>                      Mesh X length" << endl;
+        cout << "\t<Ly>                      Mesh Y length" << endl;
+        cout << "\t<Nx>                      Number of X nodes" << endl;
+        cout << "\t<Ny>                      Number of Y nodes" << endl;
+        cout << "\t<k3>                      Number of squares in sequence" << endl;
+        cout << "\t<k4>                      Number of triangles in sequence" << endl;
+        cout << "\t<path>                    Full output path, not necessary. By default, write to current directory." << endl;
+        cout << "\t<filename>                Vtk output file name" << endl;
         return 0;
     }
     try {
 //creating mesh
-        if (!strcmp(argv[1], "-gen")){
+        if (!strcmp(argv[1], "--gen")){
             Lx = atoi(argv[2]);
             Ly = atoi(argv[3]);
             Nx = atoi(argv[4]);
@@ -55,7 +70,7 @@ int main(int argc, char **argv) {
             cout << "\tC: " << end - start << " sec" << endl;
 
             start = omp_get_wtime();
-            topoEN = topos::build_topoEN(C, Nx, Ny, k3, k4, nE);
+            topoEN = topos::build_topoEN(Nx, Ny, k3, k4, nE);
             end = omp_get_wtime();
             cout << "\ttopoEN: " << end - start << " sec" << endl;
 
@@ -74,7 +89,7 @@ int main(int argc, char **argv) {
             end = omp_get_wtime();
             cout << "\ttopoNS: " << end - start << " sec" << endl;
         }
-        else if (!strcmp(argv[1], "-file")){
+        else if (!strcmp(argv[1], "--file")){
             if (read_file(C, topoEN,topoSN))
                 throw 1;
             type = 1;
@@ -84,25 +99,28 @@ int main(int argc, char **argv) {
         else {throw 1;}
 
         cout << "\nMemory:\n" << endl;
-        cout << "\tC: " <<  sizeof(C) * sizeof(double) << " bytes" << endl;
-        cout << "\ttopoEN: " <<  sizeof(topoEN) * sizeof(int) << " bytes" << endl;
-        cout << "\ttopoNE: " <<  sizeof(topoNE) * sizeof(int) << " bytes" << endl;
-        cout << "\ttopoSN: " <<  sizeof(topoSN) * sizeof(int) << " bytes" << endl;
-        cout << "\ttopoNS: " <<  sizeof(topoNS) * sizeof(int) << " bytes" << endl;
+        cout << "\tC: " <<  (C).getTotalSize() * sizeof(double) << " bytes" << endl;
+        cout << "\ttopoEN: " <<  (topoEN).getTotalSize() * sizeof(int) << " bytes" << endl;
+        cout << "\ttopoNE: " <<  (topoNE).getTotalSize() * sizeof(int) << " bytes" << endl;
+        cout << "\ttopoSN: " <<  (topoSN).getTotalSize() * sizeof(int) << " bytes" << endl;
+        cout << "\ttopoNS: " <<  (topoNS).getTotalSize() * sizeof(int) << " bytes" << endl;
 
 
 //output mesh
-        if (!strcmp(argv[argc-2], "-vtk"))
+        if (!strcmp(argv[argc-2], "--vtk"))
         {
             char* filename = argv[argc-1];
             strcat(filename,".vtk");
             vtkGenerator<double,int> vtk(filename);
             vtk.printInVTK(nN,C,topoEN);
         }
-        else if (!strcmp(argv[argc-1], "-out")){
+        else if (!strcmp(argv[argc-2], "--out")){
+            write_file(C,topoEN,topoSN,argv[argc-1]);
+        }
+        else if (!strcmp(argv[argc-1], "--out")){
             write_file(C,topoEN,topoSN);
         }
-        else if (!strcmp(argv[argc-1], "-print")){
+        else if (!strcmp(argv[argc-1], "--print")){
             cout << "\nCoordinates:\n" << endl;
             C.printContainer();
             cout << "\nTopoEN:\n" << endl;
@@ -118,7 +136,7 @@ int main(int argc, char **argv) {
         else {throw 1;}
     }
     catch(...){
-        cout << "Error!" << endl;
+        cout << "Error occured!" << endl;
         return 1;
     }
     

@@ -1,5 +1,6 @@
 #include "FixedSizeMeshContainer.cpp"
 #include "VariableSizeMeshContainer.cpp"
+#include <omp.h>
 
 #pragma once
 
@@ -19,8 +20,9 @@ namespace topos
             }
         }
     }
+    
     // topoEN
-    VariableSizeMeshContainer<int> build_topoEN(FixedSizeMeshContainer<double> C, int Nx, int Ny, int k3, int k4, int nE){
+    VariableSizeMeshContainer<int> build_topoEN(int Nx, int Ny, int k3, int k4, int nE){
         vector<int> BlockSize;
         BlockSize.push_back(0);
         vector<int> temp;
@@ -36,36 +38,31 @@ namespace topos
 
         while (temp_nE>0) {
             if (!figure) {
-
                 temp.push_back(EN_i);
                 temp.push_back(EN_i+1);
                 temp.push_back(EN_i+Nx);
+
                 BlockSize.push_back(3);
 
-                topoEN.add(temp, BlockSize);
-                temp.clear();
-                BlockSize.clear();
 
                 temp.push_back(EN_i+1);
                 temp.push_back(EN_i+1+Nx);
                 temp.push_back(EN_i+Nx);
+
                 BlockSize.push_back(3);
 
-                topoEN.add(temp, BlockSize);
-                temp.clear();
-                BlockSize.clear();
+
                 temp_nE-=2;
-            } else {
-
+            }
+            else 
+            {
                 temp.push_back(EN_i);
                 temp.push_back(EN_i+1);
                 temp.push_back(EN_i+1+Nx);
                 temp.push_back(EN_i+Nx);
+                
                 BlockSize.push_back(4);
 
-                topoEN.add(temp, BlockSize);
-                temp.clear();
-                BlockSize.clear();
                 temp_nE--;
             }
             count_figure--;
@@ -82,11 +79,15 @@ namespace topos
                 EN_i++;
         }
 
+        topoEN.add(temp, BlockSize);
+        temp.clear();
+        BlockSize.clear();
+
         return topoEN;
     }
 
     // topoNE
-    VariableSizeMeshContainer<int> build_topoNE(VariableSizeMeshContainer<int> topoEN){
+    VariableSizeMeshContainer<int> build_topoNE(const VariableSizeMeshContainer<int>& topoEN){
         vector<int> BlockSize;
         vector<int> temp;
         VariableSizeMeshContainer<int> topoNE(temp, BlockSize);
@@ -121,10 +122,11 @@ namespace topos
             BlockSize.push_back(count_mas[i]);
             for (int j = 0; j < count_mas[i]; j++)
                 temp.push_back(0);
-            topoNE.add(temp,BlockSize);
-            BlockSize.clear();
-            temp.clear();
         }
+
+        topoNE.add(temp,BlockSize);
+        BlockSize.clear();
+        temp.clear();
 
         for (int i = 0; i < nE; i++){
             for (int j = 0; j < topoEN.getBlockSize(i); j++){
@@ -198,7 +200,7 @@ namespace topos
     }
 
     // topoNS
-    VariableSizeMeshContainer<int> build_topoNS(VariableSizeMeshContainer<int> topo){
+    VariableSizeMeshContainer<int> build_topoNS(const VariableSizeMeshContainer<int>& topo){
         vector<int> BlockSize;
         vector<int> temp;
         int Nx, Ny;

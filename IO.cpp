@@ -1,5 +1,6 @@
 #include "FixedSizeMeshContainer.cpp"
 #include "VariableSizeMeshContainer.cpp"
+#include <cstring>
 
 #pragma once
 
@@ -77,21 +78,29 @@ int num_elem(int Nx, int Ny, int k3, int k4){
     return nE;
 }
 
-void write_file(FixedSizeMeshContainer<double> C, VariableSizeMeshContainer<int> topoEN, VariableSizeMeshContainer<int> topoSN){
+void write_file(FixedSizeMeshContainer<double>& C, VariableSizeMeshContainer<int>& topoEN, VariableSizeMeshContainer<int>& topoSN,const char* path = ""){
     ofstream fout;
 
-    fout.open("mesh.txt");
+    char filename[strlen(path + 14)];
+    strcpy(filename,path);
+    
+    strcat(filename,"mesh.txt");
+    fout.open(filename);
     fout << "Nn " << C.getBlockNumber() << '\n';
     fout << "Nt " << topoEN.getBlockNumber() << '\n';
     fout << "NFaceBC " << topoSN.getBlockNumber() << '\n';
     fout << "NumCoords " << C.getBlockSize() << '\n';
     fout.close();
 
-    fout.open("coordinate.msh");
+    strcpy(filename,path);
+    strcat(filename,"coordinate.msh");
+    fout.open(filename);
     for (int i = 0; i < C.getBlockNumber(); i++)
         fout << C[i][0] << " " << C[i][1] << '\n';
     fout.close();
 
+    strcpy(filename,path);
+    strcat(filename,"topo.msh");
     fout.open("topo.msh");
     for (int i = 0; i < topoEN.getBlockNumber(); i++) {
         fout << topoEN.getBlockSize(i);
@@ -101,6 +110,8 @@ void write_file(FixedSizeMeshContainer<double> C, VariableSizeMeshContainer<int>
     }
     fout.close();
 
+    strcpy(filename,path);
+    strcat(filename,"bctopo.msh");
     fout.open("bctopo.msh");
     for (int i = 0; i < topoSN.getBlockNumber(); i++){
         fout << topoSN.getBlockSize(i) - 1;
