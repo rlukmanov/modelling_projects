@@ -28,7 +28,8 @@ int main(int argc, char **argv) {
 
     double start, end;
 
-    if ((argc == 1) || !((argc == 3) || (argc == 9) || (argc == 10))){
+    if ((argc == 1) || !((argc == 3) || (argc == 9) || (argc == 10)) || (strcmp(argv[argc-1], "--print") && strcmp(argv[argc-1], "--out") && strcmp(argv[argc-2], "--out") && strcmp(argv[argc-2], "--vtk"))){
+        cout << "Mesh builder v0.1 beta" << endl;
         cout << "Usage:  --gen <Lx> <Ly> <Nx> <Ny> <k3> <k4> | --file \n\t--print | --out (<path>) | --vtk <filename>" << endl;
         cout << "Commands:" << endl;
         cout << "\t--gen                     Generate mesh" << endl; 
@@ -73,7 +74,7 @@ int main(int argc, char **argv) {
             topoEN = topos::build_topoEN(Nx, Ny, k3, k4, nE);
             end = omp_get_wtime();
             cout << "\ttopoEN: " << end - start << " sec" << endl;
-
+            
             start = omp_get_wtime();
             topoNE = topos::build_topoNE(topoEN);
             end = omp_get_wtime();
@@ -96,7 +97,27 @@ int main(int argc, char **argv) {
             topoNE = topos::build_topoNE(topoEN);
             topoNS = topos::build_topoNS(topoSN);
         }
-        else {throw 1;}
+        else
+        {
+            cout << "Mesh builder v0.1 beta" << endl;
+            cout << "Usage:  --gen <Lx> <Ly> <Nx> <Ny> <k3> <k4> | --file \n\t--print | --out (<path>) | --vtk <filename>" << endl;
+            cout << "Commands:" << endl;
+            cout << "\t--gen                     Generate mesh" << endl; 
+            cout << "\t--file                    Read mesh from file(in current directory)" << endl; 
+            cout << "\t--print                   Print mesh to stdout" << endl;
+            cout << "\t--out                     Print mesh to file" << endl;
+            cout << "\t--vtk                     Print mesh in \" .vtk \" format to file" << endl;
+            cout << "Options:" << endl; 
+            cout << "\t<Lx>                      Mesh X length" << endl;
+            cout << "\t<Ly>                      Mesh Y length" << endl;
+            cout << "\t<Nx>                      Number of X nodes" << endl;
+            cout << "\t<Ny>                      Number of Y nodes" << endl;
+            cout << "\t<k3>                      Number of squares in sequence" << endl;
+            cout << "\t<k4>                      Number of triangles in sequence" << endl;
+            cout << "\t<path>                    Full output path, not necessary. By default, write to current directory." << endl;
+            cout << "\t<filename>                Vtk output file name" << endl;
+            return 1;
+        }
 
         cout << "\nMemory:\n" << endl;
         cout << "\tC: " <<  (C).getTotalSize() * sizeof(double) << " bytes" << endl;
@@ -133,7 +154,27 @@ int main(int argc, char **argv) {
             topoNS.printContainer();
             if (!type) draw_grid(Nx - 1, Ny - 1, k3, k4);
         }
-        else {throw 1;}
+        else
+        {
+            cout << "Mesh builder v0.1 beta" << endl;
+            cout << "Usage:  --gen <Lx> <Ly> <Nx> <Ny> <k3> <k4> | --file \n\t--print | --out (<path>) | --vtk <filename>" << endl;
+            cout << "Commands:" << endl;
+            cout << "\t--gen                     Generate mesh" << endl; 
+            cout << "\t--file                    Read mesh from file(in current directory)" << endl; 
+            cout << "\t--print                   Print mesh to stdout" << endl;
+            cout << "\t--out                     Print mesh to file" << endl;
+            cout << "\t--vtk                     Print mesh in \" .vtk \" format to file" << endl;
+            cout << "Options:" << endl; 
+            cout << "\t<Lx>                      Mesh X length" << endl;
+            cout << "\t<Ly>                      Mesh Y length" << endl;
+            cout << "\t<Nx>                      Number of X nodes" << endl;
+            cout << "\t<Ny>                      Number of Y nodes" << endl;
+            cout << "\t<k3>                      Number of squares in sequence" << endl;
+            cout << "\t<k4>                      Number of triangles in sequence" << endl;
+            cout << "\t<path>                    Full output path, not necessary. By default, write to current directory." << endl;
+            cout << "\t<filename>                Vtk output file name" << endl;
+            return 0;
+        }
     }
     catch(...){
         cout << "Error occured!" << endl;

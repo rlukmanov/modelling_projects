@@ -77,8 +77,8 @@ int num_elem(int Nx, int Ny, int k3, int k4){
 
     return nE;
 }
-
-void write_file(FixedSizeMeshContainer<double>& C, VariableSizeMeshContainer<int>& topoEN, VariableSizeMeshContainer<int>& topoSN,const char* path = ""){
+template <typename T1,typename T2>
+void write_file(FixedSizeMeshContainer<T1>& C, VariableSizeMeshContainer<T2>& topoEN, VariableSizeMeshContainer<T2>& topoSN,const char* path = ""){
     ofstream fout;
 
     char filename[strlen(path + 14)];
@@ -123,7 +123,8 @@ void write_file(FixedSizeMeshContainer<double>& C, VariableSizeMeshContainer<int
     fout.close();
 }
 
-int read_file(FixedSizeMeshContainer<double> &C, VariableSizeMeshContainer<int> &topoEN, VariableSizeMeshContainer<int> &topoSN){
+template <typename T1,typename T2>
+int read_file(FixedSizeMeshContainer<T1> &C, VariableSizeMeshContainer<T2> &topoEN, VariableSizeMeshContainer<T2> &topoSN){
     ifstream fin;
     int nN, nE, NFaceBC, NumCoords, count_node;
     char str;
