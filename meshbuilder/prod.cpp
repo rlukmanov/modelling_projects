@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
 //output mesh
         if (!strcmp(argv[argc-2], "--vtk"))
         {
-            if (argv[argc - 1] == null)
+            if (argv[argc - 1] == nullptr)
             {
                 cout << "Expected <filename>" << endl;
                 return 1;

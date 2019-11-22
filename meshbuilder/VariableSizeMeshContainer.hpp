@@ -211,7 +211,6 @@ VariableSizeMeshContainer<T>::VariableSizeMeshContainer(const VariableSizeMeshCo
 template <typename T>
 bool VariableSizeMeshContainer<T>::add(const vector<T>& extra,const vector<int>& blockSizes)
 {
-    std::cout << "HERE" << std::endl;
     if (!checkSizes(extra,blockSizes))
     {
         cerr << "Error: Incompatible sizes!" << endl;
@@ -220,7 +219,6 @@ bool VariableSizeMeshContainer<T>::add(const vector<T>& extra,const vector<int>&
     else
     {
         this->blockNumber += countBlockNumber(extra.size(),blockSizes);
-           std::cout << V.size() << extra.size() <<  std::endl;
         V.reserve(V.size() + extra.size() - 1);//error was here: need to reserve exactly V.size() + extra.size() - 1, not V.size() + extra.size()
         IA.reserve(blockNumber + blockSizes.size());
         for(typename vector<T>::const_iterator it = extra.begin(); it != extra.end();++it)
