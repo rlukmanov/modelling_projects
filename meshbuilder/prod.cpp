@@ -7,11 +7,11 @@
 #include <omp.h>
 #include <cstring>
 #include <cstdlib>
-#include "toposBuild.cpp"
-#include "VariableSizeMeshContainer.cpp"
-#include "FixedSizeMeshContainer.cpp"
-#include "vtkGenerator.cpp"
-#include "IO.cpp"
+#include "toposBuild.hpp"
+#include "VariableSizeMeshContainer.hpp"
+#include "FixedSizeMeshContainer.hpp"
+#include "vtkGenerator.hpp"
+#include "IO.hpp"
 
 using namespace std;
 
@@ -57,7 +57,11 @@ int main(int argc, char **argv) {
             Ny = atoi(argv[5]);
             k3 = atoi(argv[6]);
             k4 = atoi(argv[7]);
-            if ((k3*k3 + k4*k4 == 0) || (k3 < 0) || (k4 < 0)) throw 1;
+            if ((Lx <= 0) || (Ly <= 0) || (k3 <= 1) || (k4 <= 1))
+            {
+                cout << "Wrong sizes: <Lx>,<Ly>,<Nx>,<Ny> can't be less or equal to zero! <k3>,<k4> must be greater than one!" << endl;
+                return 1;
+            }
 
             C.setBlockSize(2);
             nN = Nx *  Ny;
@@ -92,30 +96,17 @@ int main(int argc, char **argv) {
         }
         else if (!strcmp(argv[1], "--file")){
             if (read_file(C, topoEN,topoSN))
-                throw 1;
+            {
+                cout << "File can't be read!" << endl;
+                return 1;
+            }
             type = 1;
             topoNE = topos::build_topoNE(topoEN);
             topoNS = topos::build_topoNS(topoSN);
         }
         else
         {
-            cout << "Mesh builder v0.1 beta" << endl;
-            cout << "Usage:  --gen <Lx> <Ly> <Nx> <Ny> <k3> <k4> | --file \n\t--print | --out (<path>) | --vtk <filename>" << endl;
-            cout << "Commands:" << endl;
-            cout << "\t--gen                     Generate mesh" << endl; 
-            cout << "\t--file                    Read mesh from file(in current directory)" << endl; 
-            cout << "\t--print                   Print mesh to stdout" << endl;
-            cout << "\t--out                     Print mesh to file" << endl;
-            cout << "\t--vtk                     Print mesh in \" .vtk \" format to file" << endl;
-            cout << "Options:" << endl; 
-            cout << "\t<Lx>                      Mesh X length" << endl;
-            cout << "\t<Ly>                      Mesh Y length" << endl;
-            cout << "\t<Nx>                      Number of X nodes" << endl;
-            cout << "\t<Ny>                      Number of Y nodes" << endl;
-            cout << "\t<k3>                      Number of squares in sequence" << endl;
-            cout << "\t<k4>                      Number of triangles in sequence" << endl;
-            cout << "\t<path>                    Full output path, not necessary. By default, write to current directory." << endl;
-            cout << "\t<filename>                Vtk output file name" << endl;
+            cout << "Expected \"--gen\" or \"--file\"" << endl;
             return 1;
         }
 
@@ -130,10 +121,18 @@ int main(int argc, char **argv) {
 //output mesh
         if (!strcmp(argv[argc-2], "--vtk"))
         {
-            char* filename = argv[argc-1];
-            strcat(filename,".vtk");
-            vtkGenerator<double,int> vtk(filename);
-            vtk.printInVTK(nN,C,topoEN);
+            if (argv[argc - 1] == null)
+            {
+                cout << "Expected <filename>" << endl;
+                return 1;
+            }
+            else
+            {
+                char* filename = argv[argc-1];
+                strcat(filename,".vtk");
+                vtkGenerator<double,int> vtk(filename);
+                vtk.printInVTK(nN,C,topoEN);
+            }
         }
         else if (!strcmp(argv[argc-2], "--out")){
             write_file(C,topoEN,topoSN,argv[argc-1]);
@@ -156,28 +155,12 @@ int main(int argc, char **argv) {
         }
         else
         {
-            cout << "Mesh builder v0.1 beta" << endl;
-            cout << "Usage:  --gen <Lx> <Ly> <Nx> <Ny> <k3> <k4> | --file \n\t--print | --out (<path>) | --vtk <filename>" << endl;
-            cout << "Commands:" << endl;
-            cout << "\t--gen                     Generate mesh" << endl; 
-            cout << "\t--file                    Read mesh from file(in current directory)" << endl; 
-            cout << "\t--print                   Print mesh to stdout" << endl;
-            cout << "\t--out                     Print mesh to file" << endl;
-            cout << "\t--vtk                     Print mesh in \" .vtk \" format to file" << endl;
-            cout << "Options:" << endl; 
-            cout << "\t<Lx>                      Mesh X length" << endl;
-            cout << "\t<Ly>                      Mesh Y length" << endl;
-            cout << "\t<Nx>                      Number of X nodes" << endl;
-            cout << "\t<Ny>                      Number of Y nodes" << endl;
-            cout << "\t<k3>                      Number of squares in sequence" << endl;
-            cout << "\t<k4>                      Number of triangles in sequence" << endl;
-            cout << "\t<path>                    Full output path, not necessary. By default, write to current directory." << endl;
-            cout << "\t<filename>                Vtk output file name" << endl;
-            return 0;
+            cout << "Expected \"--vtk\" <filename> ,\"--file\" or \"--print\"" << endl;
+            return 1;
         }
     }
-    catch(...){
-        cout << "Error occured!" << endl;
+    catch(exception& exc){
+        cout << exc.what() << endl;
         return 1;
     }
     

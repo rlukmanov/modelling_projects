@@ -1,5 +1,5 @@
-#include "FixedSizeMeshContainer.cpp"
-#include "VariableSizeMeshContainer.cpp"
+#include "FixedSizeMeshContainer.hpp"
+#include "VariableSizeMeshContainer.hpp"
 #include <cstring>
 
 #pragma once
@@ -81,10 +81,11 @@ template <typename T1,typename T2>
 void write_file(FixedSizeMeshContainer<T1>& C, VariableSizeMeshContainer<T2>& topoEN, VariableSizeMeshContainer<T2>& topoSN,const char* path = ""){
     ofstream fout;
 
-    char filename[strlen(path + 14)];
-    strcpy(filename,path);
+    char* filename = new char(strlen(path + 14));
     
+    strcpy(filename,path);
     strcat(filename,"mesh.txt");
+
     fout.open(filename);
     fout << "Nn " << C.getBlockNumber() << '\n';
     fout << "Nt " << topoEN.getBlockNumber() << '\n';
@@ -121,6 +122,8 @@ void write_file(FixedSizeMeshContainer<T1>& C, VariableSizeMeshContainer<T2>& to
         fout << '\n';
     }
     fout.close();
+
+    delete filename;
 }
 
 template <typename T1,typename T2>

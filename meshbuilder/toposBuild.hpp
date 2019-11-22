@@ -1,5 +1,5 @@
-#include "FixedSizeMeshContainer.cpp"
-#include "VariableSizeMeshContainer.cpp"
+#include "FixedSizeMeshContainer.hpp"
+#include "VariableSizeMeshContainer.hpp"
 #include <omp.h>
 
 #pragma once
@@ -25,17 +25,13 @@ namespace topos
     // topoEN
     VariableSizeMeshContainer<int> build_topoEN(int Nx, int Ny, int k3, int k4, int nE){
         vector<int> BlockSize;
-        BlockSize.push_back(0);
         vector<int> temp;
-        VariableSizeMeshContainer<int> topoEN;
+        VariableSizeMeshContainer<int> topoEN(temp, BlockSize);
+
         bool figure = k3 > 0 ? false : true; // 0 - triangle, 1 - square
         int count_figure = figure ? k4 : k3;
         int EN_i = 0;
-        int temp_nE;
-
-        temp_nE = nE;
-        topoEN.add(temp, BlockSize);
-        BlockSize.clear();
+        int temp_nE = nE;
 
         while (temp_nE>0) {
             if (!figure) {
@@ -81,6 +77,9 @@ namespace topos
         }
 
         topoEN.add(temp, BlockSize);
+        BlockSize.clear();
+        temp.clear();
+
         temp.clear();
         BlockSize.clear();
 
@@ -130,8 +129,6 @@ namespace topos
 
 
         topoNE.add(temp,BlockSize);
-        BlockSize.clear();
-        temp.clear();
 
         for (int i = 0; i < nE; i++){
             for (int j = 0; j < topoEN.getBlockSize(i); j++){
@@ -166,11 +163,6 @@ namespace topos
             temp.push_back(Nx - 1 + i);
             temp.push_back(Nx - 1 + i + 1);
             BlockSize.push_back(3);
-
-            topoSN.add(temp, BlockSize);
-
-            temp.clear();
-            BlockSize.clear();
         }
 
         for(int i = 0; i < Nx - 1; ++i) {
@@ -178,11 +170,6 @@ namespace topos
             temp.push_back(Nx + Ny - 2 + i);
             temp.push_back(Nx + Ny - 2 + i + 1);
             BlockSize.push_back(3);
-
-            topoSN.add(temp, BlockSize);
-
-            temp.clear();
-            BlockSize.clear();
         }
 
         for(int i = 0; i < Ny - 1; ++i) {
@@ -194,13 +181,10 @@ namespace topos
             else
                 temp.push_back(Nx + Nx + Ny - 3 + i + 1);
             BlockSize.push_back(3);
-
-            topoSN.add(temp, BlockSize);
-
-            temp.clear();
-            BlockSize.clear();
         }
-
+        topoSN.add(temp, BlockSize);
+        temp.clear();
+        BlockSize.clear();
         return topoSN;
     }
 
@@ -211,7 +195,8 @@ namespace topos
         vector<T> temp;
         int Nx, Ny;
         VariableSizeMeshContainer<T> topoNS(temp, BlockSize);
-
+        std::cout << "TOPO_NS" << std::endl;
+        std::cout << topo.getTotalSize() << std::endl;         
         for(Nx = 1; topo[Nx - 1][0] == 0; ++Nx) {}
 
         for(Ny = 1; topo[Nx + Ny - 2][0] == 1; ++Ny) {}
@@ -224,14 +209,12 @@ namespace topos
                 temp.push_back(i - 1);  
 
             temp.push_back(i);
-            BlockSize.push_back(2);
-
-            topoNS.add(temp, BlockSize);
-
-            temp.clear();        
-            BlockSize.clear();
+            BlockSize.push_back(2);           
         }
 
+        topoNS.add(temp, BlockSize);
+        temp.clear();        
+        BlockSize.clear();
         return topoNS;
     }
 }
