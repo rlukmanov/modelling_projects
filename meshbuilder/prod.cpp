@@ -62,7 +62,6 @@ int main(int argc, char **argv) {
                 cout << "Wrong sizes: <Lx>,<Ly>,<Nx>,<Ny> can't be less or equal to zero! <k3>,<k4> must be greater than one!" << endl;
                 return 1;
             }
-
             C.setBlockSize(2);
             nN = Nx *  Ny;
             nE = num_elem(Nx, Ny, k3, k4);
