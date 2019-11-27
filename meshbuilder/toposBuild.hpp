@@ -95,7 +95,7 @@ namespace topos
         vector<int> count_mass;
 
         VariableSizeMeshContainer<T> topoNE(temp, BlockSize);
-        int nE = topoEN.getBlockNumber();
+        size_t nE = topoEN.getBlockNumber();
         
         int nN = 0;
         for (int i = 0; i < nE; i++){
@@ -194,9 +194,7 @@ namespace topos
         vector<int> BlockSize;
         vector<T> temp;
         int Nx, Ny;
-        VariableSizeMeshContainer<T> topoNS(temp, BlockSize);
-        std::cout << "TOPO_NS" << std::endl;
-        std::cout << topo.getTotalSize() << std::endl;         
+        VariableSizeMeshContainer<T> topoNS(temp, BlockSize);       
         for(Nx = 1; topo[Nx - 1][0] == 0; ++Nx) {}
 
         for(Ny = 1; topo[Nx + Ny - 2][0] == 1; ++Ny) {}

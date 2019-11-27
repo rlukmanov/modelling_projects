@@ -11,11 +11,12 @@ using namespace std;
 template <typename T>
 class VariableSizeMeshContainer
 {
-    int blockNumber;
+    size_t blockNumber;
+
     vector<int> IA;//offset vector. Size is (N+1)
     vector<T> V;//main grid vector
 
-    int countBlockNumber(int vectorSize, const vector<int>& blockSizes);
+    size_t countBlockNumber(size_t vectorSize, const vector<int>& blockSizes);
 
     bool checkSizes(const vector<T>& source, const vector<int>& blockSizes);
 
@@ -47,11 +48,11 @@ public:
 
     const T* operator[](int i) const;
 
-    int getBlockNumber() const;
+    size_t getBlockNumber() const;
 
-    int getBlockSize(int i) const;
+    size_t getBlockSize(int i) const;
 
-    int getTotalSize() const;
+    size_t getTotalSize() const;
 
     void inline printContainer_coord_EN(ostream& out = cout) const
     {
@@ -132,7 +133,7 @@ int VariableSizeMeshContainer<T>::count_digit(int x) const
 }
 
 template <typename T>
-int VariableSizeMeshContainer<T>::countBlockNumber(int vectorSize, const vector<int>& blockSizes)
+size_t VariableSizeMeshContainer<T>::countBlockNumber(size_t vectorSize, const vector<int>& blockSizes)
 {
     int blockNum = 0;
     int delta = 0;
@@ -327,19 +328,19 @@ const T* VariableSizeMeshContainer<T>::operator[](int i) const
 }
 
 template <typename T>
-int VariableSizeMeshContainer<T>::getBlockNumber() const
+size_t VariableSizeMeshContainer<T>::getBlockNumber() const
 {
     return blockNumber;
 }
 
 template <typename T>
-int VariableSizeMeshContainer<T>::getBlockSize(int i) const
+size_t VariableSizeMeshContainer<T>::getBlockSize(int i) const
 {
     return IA[i+1] - IA[i];
 }
 
 template <typename T>
-int VariableSizeMeshContainer<T>::getTotalSize() const
+size_t VariableSizeMeshContainer<T>::getTotalSize() const
 {
     return V.size();
 }

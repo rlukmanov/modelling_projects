@@ -12,7 +12,7 @@ template <typename T>
 class FixedSizeMeshContainer
 {
 
-    int blockSize;
+    size_t blockSize;
     vector<T> V;//main grid vector
 
 public:
@@ -44,11 +44,11 @@ public:
 
     const T* operator[](int i) const;
 
-    int getBlockNumber() const;
+    size_t getBlockNumber() const;
 
-    int getBlockSize() const;
+    size_t getBlockSize() const;
 
-    int getTotalSize() const;
+    size_t getTotalSize() const;
 
     void inline printContainer(ostream& out = cout) const
     {
@@ -223,19 +223,19 @@ const T* FixedSizeMeshContainer<T>::operator[](int i) const
 }
 
 template <typename T>
-int FixedSizeMeshContainer<T>::getBlockNumber() const
+size_t FixedSizeMeshContainer<T>::getBlockNumber() const
 {
     return V.size()/blockSize;
 }
 
 template <typename T>
-int FixedSizeMeshContainer<T>::getBlockSize() const
+size_t FixedSizeMeshContainer<T>::getBlockSize() const
 {
     return blockSize;
 }
 
 template <typename T>
-int FixedSizeMeshContainer<T>::getTotalSize() const
+size_t FixedSizeMeshContainer<T>::getTotalSize() const
 {
      return V.size();
 }

@@ -1,6 +1,7 @@
 #include "FixedSizeMeshContainer.hpp"
 #include "VariableSizeMeshContainer.hpp"
-#include <cstring>
+#include <string>
+#include <filesystem>
 
 #pragma once
 
@@ -78,31 +79,28 @@ int num_elem(int Nx, int Ny, int k3, int k4){
     return nE;
 }
 template <typename T1,typename T2>
-void write_file(FixedSizeMeshContainer<T1>& C, VariableSizeMeshContainer<T2>& topoEN, VariableSizeMeshContainer<T2>& topoSN,const char* path = ""){
+void write_file(FixedSizeMeshContainer<T1>& C, VariableSizeMeshContainer<T2>& topoEN, VariableSizeMeshContainer<T2>& topoSN,const std::string& path = ""){
     ofstream fout;
 
-    char* filename = new char(strlen(path + 14));
-    
-    strcpy(filename,path);
-    strcat(filename,"mesh.txt");
+	if (path != "")
+	{
+		std::filesystem::create_directories(path);
+	}
 
-    fout.open(filename);
+	cout << (path + "mesh.txt").c_str() << endl;
+    fout.open((path + "mesh.txt").c_str());
     fout << "Nn " << C.getBlockNumber() << '\n';
     fout << "Nt " << topoEN.getBlockNumber() << '\n';
     fout << "NFaceBC " << topoSN.getBlockNumber() << '\n';
     fout << "NumCoords " << C.getBlockSize() << '\n';
     fout.close();
 
-    strcpy(filename,path);
-    strcat(filename,"coordinate.msh");
-    fout.open(filename);
+    fout.open((path + "coordinate.msh").c_str());
     for (int i = 0; i < C.getBlockNumber(); i++)
         fout << C[i][0] << " " << C[i][1] << '\n';
     fout.close();
 
-    strcpy(filename,path);
-    strcat(filename,"topo.msh");
-    fout.open("topo.msh");
+    fout.open((path + "topo.msh").c_str());
     for (int i = 0; i < topoEN.getBlockNumber(); i++) {
         fout << topoEN.getBlockSize(i);
         for (int j = 0; j < topoEN.getBlockSize(i); j++)
@@ -111,9 +109,7 @@ void write_file(FixedSizeMeshContainer<T1>& C, VariableSizeMeshContainer<T2>& to
     }
     fout.close();
 
-    strcpy(filename,path);
-    strcat(filename,"bctopo.msh");
-    fout.open("bctopo.msh");
+    fout.open((path + "bctopo.msh").c_str());
     for (int i = 0; i < topoSN.getBlockNumber(); i++){
         fout << topoSN.getBlockSize(i) - 1;
         for (int j = 1; j < topoSN.getBlockSize(i); j++)
@@ -123,7 +119,6 @@ void write_file(FixedSizeMeshContainer<T1>& C, VariableSizeMeshContainer<T2>& to
     }
     fout.close();
 
-    delete filename;
 }
 
 template <typename T1,typename T2>
