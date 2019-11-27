@@ -130,9 +130,8 @@ int main(int argc, char **argv) {
             }
             else
             {
-                char* filename = argv[argc-1];
-                strcat_s(filename,sizeof(filename),".vtk");
-                vtkGenerator<double,int> vtk(filename);
+                std::string path = argv[argc-1];
+                vtkGenerator<double,int> vtk(path);
                 vtk.printInVTK(C,topoEN);
             }
         }

@@ -2,6 +2,7 @@
 
 #include <typeinfo>
 #include <fstream>
+#include <filesystem>
 
 #define CELL_TYPE_TRIANGLE 5
 #define CELL_TYPE_RECTANGLE 9
@@ -16,9 +17,9 @@ class vtkGenerator
 
 public:
 
-    vtkGenerator(const char* filename)
+    vtkGenerator(const std::string& filename)
     {
-        out.open(filename,std::fstream::out);
+        out.open(filename.c_str(),std::fstream::out);
     }
 
     void printInVTK(const FixedSizeMeshContainer<T1>& coords,const VariableSizeMeshContainer<T2>& topoEN)
