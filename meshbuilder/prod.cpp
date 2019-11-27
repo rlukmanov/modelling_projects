@@ -17,9 +17,10 @@ using namespace std;
 
 int main(int argc, char **argv) {
 
-    int Nx, Ny, k3, k4, nN, nE;
+    int Nx, Ny, k3, k4, nE;
+	size_t nN;
     double Lx, Ly;
-    FixedSizeMeshContainer<double> C;
+    FixedSizeMeshContainer<double> C;//coordinates
     VariableSizeMeshContainer<int> topoEN;
     VariableSizeMeshContainer<int> topoNE;
     VariableSizeMeshContainer<int> topoSN;
@@ -55,6 +56,7 @@ int main(int argc, char **argv) {
             Ly = atoi(argv[3]);
             Nx = atoi(argv[4]);
             Ny = atoi(argv[5]);
+
             k3 = atoi(argv[6]);
             k4 = atoi(argv[7]);
             if ((Lx <= 0) || (Ly <= 0) || (k3 <= 1) || (k4 <= 1))
@@ -129,9 +131,9 @@ int main(int argc, char **argv) {
             else
             {
                 char* filename = argv[argc-1];
-                strcat(filename,".vtk");
+                strcat_s(filename,sizeof(filename),".vtk");
                 vtkGenerator<double,int> vtk(filename);
-                vtk.printInVTK(nN,C,topoEN);
+                vtk.printInVTK(C,topoEN);
             }
         }
         else if (!strcmp(argv[argc-2], "--out")){

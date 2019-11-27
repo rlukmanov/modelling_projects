@@ -95,7 +95,7 @@ namespace topos
         vector<int> count_mass;
 
         VariableSizeMeshContainer<T> topoNE(temp, BlockSize);
-        int nE = topoEN.getBlockNumber();
+        size_t nE = topoEN.getBlockNumber();
         
         int nN = 0;
         for (int i = 0; i < nE; i++){

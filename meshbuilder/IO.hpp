@@ -82,9 +82,9 @@ void write_file(FixedSizeMeshContainer<T1>& C, VariableSizeMeshContainer<T2>& to
     ofstream fout;
 
     char* filename = new char(strlen(path + 14));
-    
-    strcpy(filename,path);
-    strcat(filename,"mesh.txt");
+	
+    strcpy_s(filename,sizeof(filename),path);
+    strcat_s(filename,sizeof(filename),"mesh.txt");
 
     fout.open(filename);
     fout << "Nn " << C.getBlockNumber() << '\n';
@@ -93,15 +93,15 @@ void write_file(FixedSizeMeshContainer<T1>& C, VariableSizeMeshContainer<T2>& to
     fout << "NumCoords " << C.getBlockSize() << '\n';
     fout.close();
 
-    strcpy(filename,path);
-    strcat(filename,"coordinate.msh");
+    strcpy_s(filename, sizeof(filename),path);
+    strcat_s(filename, sizeof(filename),"coordinate.msh");
     fout.open(filename);
     for (int i = 0; i < C.getBlockNumber(); i++)
         fout << C[i][0] << " " << C[i][1] << '\n';
     fout.close();
 
-    strcpy(filename,path);
-    strcat(filename,"topo.msh");
+    strcpy_s(filename, sizeof(filename),path);
+    strcat_s(filename, sizeof(filename), "topo.msh");
     fout.open("topo.msh");
     for (int i = 0; i < topoEN.getBlockNumber(); i++) {
         fout << topoEN.getBlockSize(i);
@@ -111,8 +111,8 @@ void write_file(FixedSizeMeshContainer<T1>& C, VariableSizeMeshContainer<T2>& to
     }
     fout.close();
 
-    strcpy(filename,path);
-    strcat(filename,"bctopo.msh");
+    strcpy_s(filename, sizeof(filename),path);
+    strcat_s(filename, sizeof(filename), "bctopo.msh");
     fout.open("bctopo.msh");
     for (int i = 0; i < topoSN.getBlockNumber(); i++){
         fout << topoSN.getBlockSize(i) - 1;
