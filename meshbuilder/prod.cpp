@@ -18,13 +18,13 @@ using namespace std;
 int main(int argc, char **argv) {
 
     int Nx, Ny, k3, k4, nE;
-	size_t nN;
     double Lx, Ly;
     FixedSizeMeshContainer<double> C;//coordinates
     VariableSizeMeshContainer<int> topoEN;
     VariableSizeMeshContainer<int> topoNE;
     VariableSizeMeshContainer<int> topoSN;
     VariableSizeMeshContainer<int> topoNS;
+    VariableSizeMeshContainer<int> topoNN;
     int type = 0;
 
     double start, end;
@@ -59,13 +59,12 @@ int main(int argc, char **argv) {
 
             k3 = atoi(argv[6]);
             k4 = atoi(argv[7]);
-            if ((Lx <= 0) || (Ly <= 0) || (k3 <= 1) || (k4 <= 1))
+            if ((Lx <= 0) || (Ly <= 0) || (k3 < 0) || (k4 < 0))
             {
                 cout << "Wrong sizes: <Lx>,<Ly>,<Nx>,<Ny> can't be less or equal to zero! <k3>,<k4> must be greater than one!" << endl;
                 return 1;
             }
             C.setBlockSize(2);
-            nN = Nx *  Ny;
             nE = num_elem(Nx, Ny, k3, k4);
 
             cout << "Time:" << endl;
@@ -81,19 +80,24 @@ int main(int argc, char **argv) {
             cout << "\ttopoEN: " << end - start << " sec" << endl;
             
             start = omp_get_wtime();
-            topoNE = topos::build_topoNE(topoEN);
+            topoNE = topos::build_reverse_topo(topoEN);
             end = omp_get_wtime();
             cout << "\ttopoNE: " << end - start << " sec" << endl;
 
             start = omp_get_wtime();
-            topoSN = topos::build_topoSN(Nx,Ny);
+            topoSN = topos::build_topoSN(Nx,Ny,k3,k4);
             end = omp_get_wtime();
             cout << "\ttopoSN: " << end - start << " sec" << endl;
 
             start = omp_get_wtime();
-            topoNS = topos::build_topoNS(topoSN);
+            topoNS = topos::build_reverse_topo(topoSN);
             end = omp_get_wtime();
             cout << "\ttopoNS: " << end - start << " sec" << endl;
+
+            start = omp_get_wtime();
+            topoNN = topos::build_topoNN(topoSN);
+            end = omp_get_wtime();
+            cout << "\ttopoNN: " << end - start << " sec" << endl;
         }
         else if (!strcmp(argv[1], "--file")){
             if (read_file(C, topoEN,topoSN))
@@ -102,8 +106,9 @@ int main(int argc, char **argv) {
                 return 1;
             }
             type = 1;
-            topoNE = topos::build_topoNE(topoEN);
-            topoNS = topos::build_topoNS(topoSN);
+            topoNE = topos::build_reverse_topo(topoEN);
+            topoNS = topos::build_reverse_topo(topoSN);
+            topoNN = topos::build_topoNN(topoSN);
         }
         else
         {
@@ -117,6 +122,7 @@ int main(int argc, char **argv) {
         cout << "\ttopoNE: " <<  (topoNE).getTotalSize() * sizeof(int) << " bytes" << endl;
         cout << "\ttopoSN: " <<  (topoSN).getTotalSize() * sizeof(int) << " bytes" << endl;
         cout << "\ttopoNS: " <<  (topoNS).getTotalSize() * sizeof(int) << " bytes" << endl;
+        cout << "\ttopoNN: " <<  (topoNN).getTotalSize() * sizeof(int) << " bytes" << endl;
 
 
 //output mesh
@@ -151,6 +157,9 @@ int main(int argc, char **argv) {
             topoSN.printContainer();
             cout << "\nTopoNS:\n" << endl;
             topoNS.printContainer();
+            cout << "\nTopoNN:\n" << endl;
+            topoNN.printContainer();
+            
             if (!type) draw_grid(Nx - 1, Ny - 1, k3, k4);
         }
         else

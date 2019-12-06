@@ -1,7 +1,8 @@
 #include "FixedSizeMeshContainer.hpp"
 #include "VariableSizeMeshContainer.hpp"
 #include <string>
-#include <filesystem>
+#include <iostream>
+#include <sys/stat.h>
 
 #pragma once
 
@@ -84,10 +85,12 @@ void write_file(FixedSizeMeshContainer<T1>& C, VariableSizeMeshContainer<T2>& to
 
 	if (path != "")
 	{
-		std::filesystem::create_directories(path);
+        if (mkdir(path.c_str(),0777) == EEXIST)
+        {
+            std::cerr << "Directory exists!" << std::endl;
+        }
 	}
 
-	cout << (path + "mesh.txt").c_str() << endl;
     fout.open((path + "mesh.txt").c_str());
     fout << "Nn " << C.getBlockNumber() << '\n';
     fout << "Nt " << topoEN.getBlockNumber() << '\n';
@@ -96,23 +99,23 @@ void write_file(FixedSizeMeshContainer<T1>& C, VariableSizeMeshContainer<T2>& to
     fout.close();
 
     fout.open((path + "coordinate.msh").c_str());
-    for (int i = 0; i < C.getBlockNumber(); i++)
+    for (size_t i = 0; i < C.getBlockNumber(); i++)
         fout << C[i][0] << " " << C[i][1] << '\n';
     fout.close();
 
     fout.open((path + "topo.msh").c_str());
-    for (int i = 0; i < topoEN.getBlockNumber(); i++) {
+    for (size_t i = 0; i < topoEN.getBlockNumber(); i++) {
         fout << topoEN.getBlockSize(i);
-        for (int j = 0; j < topoEN.getBlockSize(i); j++)
+        for (size_t j = 0; j < topoEN.getBlockSize(i); j++)
             fout << " " << topoEN[i][j];
         fout << '\n';
     }
     fout.close();
 
     fout.open((path + "bctopo.msh").c_str());
-    for (int i = 0; i < topoSN.getBlockNumber(); i++){
+    for (size_t i = 0; i < topoSN.getBlockNumber(); i++){
         fout << topoSN.getBlockSize(i) - 1;
-        for (int j = 1; j < topoSN.getBlockSize(i); j++)
+        for (size_t j = 1; j < topoSN.getBlockSize(i); j++)
             fout << " " << topoSN[i][j];
         fout << " " << topoSN[i][0];
         fout << '\n';
