@@ -3,6 +3,9 @@
 #include "VariableSizeMeshContainer.hpp"
 #include <vector>
 #include <omp.h>
+#include <algorithm>
+#include <iomanip>
+
 
 template<typename T>
 class Sparse
@@ -48,7 +51,21 @@ public:
     {
         return denseColumns;
     }
+	
+	void outputMatrix() const
+    {
+        T** matr = this->getDenseMatrix();
 
+        std::cout << "Matrix: " << endl;
+        for (int i = 0; i < denseRows; i++) {
+
+            for (int j = 0; j < denseColumns; j++)
+                std::cout << fixed << setprecision(2) << matr[i][j] << " ";
+            std::cout << endl;
+        }
+        std::cout << endl;
+    }
+	
 };
 
 // template<typename T, typename = std::enable_if_t<std::is_same<T,int>::value>>
@@ -246,5 +263,117 @@ private:
         return portrait;
     }
 
+
+};
+
+template <typename T>
+class SparseCSR:public Sparse<T>{
+
+    std::vector<int> IA;
+
+public:
+
+    SparseCSR(const VariableSizeMeshContainer<int>& topoNN)
+    {
+        std::vector<int> temp;
+        this->denseColumns = this->denseRows = topoNN.getBlockNumber();
+        int prev;
+
+        IA.push_back(0);
+        for (int i = 0; i < topoNN.getBlockNumber(); i++){
+            temp.push_back(i);
+            for (int j = 0; j < topoNN.getBlockSize(i); j++){
+                temp.push_back(topoNN[i][j]);
+            }
+            std::sort(temp.begin(),temp.end());
+            for (int j = 0; j < temp.size(); j++)
+                Sparse<T>::JA.push_back(temp[j]);
+            prev = IA[IA.size() - 1];
+            IA.push_back(temp.size()+prev);
+            temp.clear();
+        }
+        IA.push_back(this->denseColumns);
+    };
+
+    T** getDenseMatrix() const override
+    {
+        T** dense = new T*[this->denseRows];
+        for(size_t i = 0;i < this->denseRows;++i) {
+            dense[i] = new T[this->denseColumns];
+            for(size_t j = 0;j < this->denseColumns;++j)
+            {
+                dense[i][j] = 0;
+            }
+        }
+
+        for(size_t i = 0; i < this->denseRows; ++i) {
+            for (size_t j = IA[i]; j < IA[i+1]; ++j){
+                dense[i][this->JA[j]] = this->A[j];
+            }
+        }
+        return dense;
+    };
+
+    std::vector<T> spmv(const std::vector<T>& x,size_t threadsNumber = 4) const override
+    {
+        std::vector<T> result;
+
+        if (x.size() != this->denseColumns)
+        {
+            std::cerr << "Incompatible sizes!" << std::endl;
+            return result;
+        }
+
+        result.reserve(this->denseRows);
+
+        omp_set_num_threads(threadsNumber); // set number stream
+        for (int i = 0; i < this->denseRows; i++){
+            result[i] = 0;
+            
+			#pragma omp parallel for
+            for (int j = IA[i]; j < IA[i+1]; j++)
+                result[i] += x[this->JA[j]] * (this->A[j]);
+        }
+
+        return result;
+    };
+
+    T* spmv(const T* x,size_t xSize,size_t threadsNumber = 4) const override
+    {
+        T* result = new T[xSize];
+        if (xSize != this->denseColumns)
+        {
+            std::cerr << "Incompatible sizes!" << std::endl;
+            return nullptr;
+        }
+
+        omp_set_num_threads(threadsNumber);
+        for(int i = 0; i < this->denseRows;++i) {
+
+            result[i] = 0;
+
+			#pragma omp parallel for
+            for (int j = IA[i]; j < IA[i+1]; j++)
+                result[i] += x[this->JA[j]] * (this->A[j]);
+        }
+
+        return result;
+    }
+
+    void set_values(const std::vector<T>& a)
+    {
+        for (int i = 0; i < a.size(); i++)
+            (this->A).push_back(a[i]);
+    }
+
+    void printIa() const
+    {
+        std::cout << "IA vector: ";
+        for(size_t i = 0;i < IA.size();++i)
+        {
+            std::cout << IA[i] << " ";
+        }
+        std::cout << std::endl;
+    }
 
 };
