@@ -74,17 +74,9 @@ class SparseELL: public Sparse<T>
 {
 public:
     
-    SparseELL(T** dense,size_t rows,size_t columns)
+    SparseELL(const VariableSizeMeshContainer<int>& topoNN,const std::vector<T>& nodeValues)
     {
-        this->denseRows = rows;
-        this->denseColumns = columns;
-        findRowOffset(dense,rows,columns);
-        buildAJA(dense,rows,columns);
-    }
-
-    SparseELL(const VariableSizeMeshContainer<T>& topoNN)
-    {
-        this->denseRows = this->denseRows = topoNN.getBlockNumber();
+        this->denseRows = this->denseColumns = topoNN.getBlockNumber();
         int** m_portrait = build_portrait(topoNN);
 
         for(size_t i = 0;i < topoNN.getBlockNumber();++i)
@@ -142,9 +134,13 @@ public:
         else
         {
             y.resize(x.size());
+
+            #pragma omp parallel for num_threads(threadsNumber)//TODO: ask about template reduction
             for(size_t i = 0;i < this->denseRows;++i)
             {
                 y[i] = 0;
+
+                // #pragma omp parallel for reduction(+:result[i])
                 for(size_t j = i * this->rowOffset;j < (i + 1) * this->rowOffset;++j)
                 {
                     y[i] += this->A[j] * x[this->JA[j]];
@@ -156,19 +152,20 @@ public:
 
     T* spmv(const T* x,size_t xSize,size_t threadsNumber = 4) const override
     {
-        T* y = new T[xSize];//need to deallocate then
+        
         if (xSize != this->denseColumns)
         {
             std::cerr << "Incompatible sizes!" << std::endl;
-            return y;
+            return nullptr;
         }
         else
         {
+            T* y = new T[xSize];//need to deallocate then
             for(size_t i = 0;i < this->denseRows;++i)
             {
                 y[i] = 0;
-                omp_set_num_threads(threadsNumber);
-                #pragma omp parallel for reduction(+:y[i])
+
+                #pragma omp parallel for num_threads(threadsNumber) reduction(+:y[i])
                 for(size_t j = i * rowOffset;j < (i + 1) * rowOffset;++j)
                 {
                     y[i] += this->A[j] * x[this->JA[j]];
@@ -236,7 +233,7 @@ private:
         }
     }
 
-    int** build_portrait(const VariableSizeMeshContainer<T>& topoNN) const//not forget to free memory lately
+    int** build_portrait(const VariableSizeMeshContainer<int>& topoNN) const//not forget to free memory lately
     {
         size_t blockNumber = topoNN.getBlockNumber();
         
@@ -325,12 +322,16 @@ public:
         }
 
         result.reserve(this->denseRows);
+        
+        
+        omp_set_num_threads(threadsNumber);
 
-        omp_set_num_threads(threadsNumber); // set number stream
+        #pragma omp parallel for
         for (int i = 0; i < this->denseRows; i++){
-            result[i] = 0;
             
-			#pragma omp parallel for
+            result[i] = 0;    
+
+            // #pragma omp parallel for reduction(+:result[i])
             for (int j = IA[i]; j < IA[i+1]; j++)
                 result[i] += x[this->JA[j]] * (this->A[j]);
         }
@@ -347,12 +348,11 @@ public:
             return nullptr;
         }
 
-        omp_set_num_threads(threadsNumber);
         for(int i = 0; i < this->denseRows;++i) {
 
             result[i] = 0;
 
-			#pragma omp parallel for
+			#pragma omp parallel for num_threads(threadsNumber) reduction(+:result[i])
             for (int j = IA[i]; j < IA[i+1]; j++)
                 result[i] += x[this->JA[j]] * (this->A[j]);
         }
