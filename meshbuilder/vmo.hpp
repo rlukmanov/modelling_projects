@@ -12,15 +12,14 @@ namespace vmo
     {
         std::vector<VT> result;
         size_t size = x.size();
-
         if (size != y.size())
         {
-            std::cerr << "Incompatible sizes!" << std::endl;
+            std::cerr << "Incompatible sizes in axpby!" << std::endl;
             return result;
         }
         else
         {
-            result.reserve(size);
+            result.resize(size);
 
             #pragma omp parallel for num_threads(threadsNumber) 
             for(size_t i = 0; i < size;++i)
@@ -40,7 +39,7 @@ namespace vmo
 
         if (size != y.size())
         {
-            std::cerr << "Incompatible sizes!" << std::endl;
+            std::cerr << "Incompatible sizes in dot!" << std::endl;
             return result;//incorrent
         }
         else
@@ -50,7 +49,6 @@ namespace vmo
             {
                 result += x[i] * y[i];
             }
-            
             return result;
         }
     }
@@ -60,30 +58,36 @@ namespace vmo
     {
         std::vector<VT> result;
 
+        result.resize(x.size());
+
         #pragma omp parallel for num_threads(threadsNumber) 
         for(size_t i = 0; i < x.size();++i)
         {
             result[i] = scalar * x[i];
         }
-
         return result;
     }
 
     //A = A^(T) > 0
     template<typename M,typename V>
-    std::vector<double> conGradSolver(Sparse<M>& A, std::vector<V> b,double eps)
+    std::vector<double> conGradSolver(Sparse<M>& A, std::vector<V> b,double eps = 0.001)
     {
-        std::vector<V> x_cur;
+        std::vector<double> x_prev(A.getDenseColumns());
         if (A.getDenseColumns() != b.size())
         {
-            std::cerr << "Incompatible sizes!" << std::endl;
+            std::cerr << "Incompatible sizes in Solver!" << std::endl;
         }
         else
         {
             size_t size = A.getDenseColumns();  
 
-            double rev_M[size][size];
-            M dense[size][size] = A.getDenseMatrix();
+            double** rev_M = new double*[size];
+            for(size_t i = 0; i < size;++i)
+            {
+                rev_M[i] = new double[size];
+            }
+
+            M** dense = A.getDenseMatrix();
 
             //forming preconditioner Matrix
 
@@ -93,20 +97,22 @@ namespace vmo
                 {
                     rev_M[i][j] = 0.0;
                 }
-                rev_M[i][i] = 1 / dense[i][i];
+                rev_M[i][i] = 1 / (dense[i][i] + eps);
             }
+            
+            SparseELL<double> reverse_M(rev_M,size,size);//preconditioner
 
             for(size_t i = 0;i < size;++i)
             {
                 delete[] dense[i];
+                delete[] rev_M[i];
             }   
             delete[] dense;
-
-            //initializang parameters for algorithm
-
-            SparseELL<double> reverse_M;//preconditioner
+            delete[] rev_M;
             
-            std::vector<double> x_prev;
+            //initializang parameters for algorithm
+            
+            std::vector<double> x_cur;
 
             std::vector<double> r_cur;
             std::vector<double> r_prev = b;//we think that x0 = (0,0,0,0,0,0 ... 0)^(T) -> b - Ax = b
@@ -121,12 +127,12 @@ namespace vmo
             double alpha,beta;
 
             size_t k = 1;
-
-            do
+            
+            do 
             {
+                std::cout << delta_cur << std::endl;
                 z = reverse_M.spmv(r_prev);
                 delta_cur = dot(r_prev,z);
-
                 if (k == 1)
                 {
                     p_cur = z;
@@ -136,13 +142,12 @@ namespace vmo
                     beta = delta_cur / delta_prev;
                     p_cur = axpby(z,multiply(p_prev,beta),1,1);
                 }
-
                 q = A.spmv(p_cur);
                 alpha = delta_cur / dot(p_cur,q);
-                
-                x_cur = axpby(x_prev,multiply(p_prev,alpha),1,-1);
+
+                x_cur = axpby(x_prev,multiply(p_cur,alpha),1,1);
+
                 r_cur = axpby(r_prev,multiply(q,alpha),1,-1);
-                
                 if (delta_cur < eps)
                 {
                     break;
@@ -154,10 +159,11 @@ namespace vmo
                 delta_prev = delta_cur;
 
                 k += 1;
+                
             } while(true);
 
         }
         
-        return x_cur;
+        return x_prev;
     }
 }
