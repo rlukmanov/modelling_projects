@@ -59,13 +59,21 @@ public:
         T** matr = this->getDenseMatrix();
 
         std::cout << "Matrix: " << endl;
-        for (int i = 0; i < denseRows; i++) {
-
-            for (int j = 0; j < denseColumns; j++)
-                std::cout << fixed << setprecision(2) << matr[i][j] << " ";
+        for (size_t i = 0; i < denseRows; i++) 
+        {
+            for (size_t j = 0; j < denseRows; j++)
+            {
+                std::cout << fixed << matr[i][j] << " ";
+            }
             std::cout << endl;
         }
         std::cout << endl;
+
+        for(size_t i = 0;i < this->denseRows;++i)
+        {
+            delete[] matr[i];
+        }
+        delete[] matr;
     }
 	
 };
@@ -77,6 +85,7 @@ public:
     
     SparseELL(T** dense,size_t rows,size_t columns)//from dense(needed in solver)
     {
+        this->valuesSize = 0;
         this->denseRows = rows;
         this->denseColumns = columns;
         findRowOffset(dense,this->denseRows,this->denseRows);
@@ -85,6 +94,7 @@ public:
 
     SparseELL(const VariableSizeMeshContainer<int>& topoNN)//from topo
     {
+        this->valuesSize = 0;
         this->denseRows = this->denseColumns = topoNN.getBlockNumber();
         T** m_portrait = build_portrait(topoNN);
 
@@ -141,9 +151,10 @@ public:
 
                 for(size_t j = i * this->rowOffset;j < (i + 1) * this->rowOffset;++j)
                 {
-                    y[i] += this->A[j] * x[this->JA[j]];
+                    y[i] += x[this->JA[j]] * this->A[j];
                 }
             }
+
             return y;
         }
     }
@@ -167,7 +178,7 @@ public:
 
                 for(size_t j = i * rowOffset;j < (i + 1) * rowOffset;++j)
                 {
-                    y[i] += this->A[j] * x[this->JA[j]];
+                    y[i] += x[this->JA[j]] * this->A[j];
                 }
             }
             return y;
@@ -176,15 +187,19 @@ public:
 
     void setValues(const std::vector<T>& a) override
     {
-        if (a.size() != this->A.size())
+        if (a.size() != this->getValuesSize())
         {
             std::cerr << "Incompatibe sizes of values vectors!" << std::endl;
         }
         else
         {
-            for (size_t i = 0; i < a.size(); i++)
+            for (size_t i = 0,j = 0; j < a.size(); i++)//i - for A, j - for vector "a"
             {
-               this->A[i] = a[i];
+               if (this->A[i] != 0)
+               {
+                    this->A[i] = a[j];
+                    j++;
+               } 
             }
         }
     }
@@ -194,14 +209,16 @@ public:
         return rowOffset;
     }
 
-    size_t getValuesSize() const override
+    //must remember that have padding
+    size_t getValuesSize() const override 
     {
-        return this->A.size();
+        return this->valuesSize;
     }
 
+
 private:
-    size_t rowOffset;
-    
+    size_t rowOffset,valuesSize;
+
     void findRowOffset(T** dense,size_t rows,size_t columns)
     {
         this->rowOffset = 1;
@@ -238,6 +255,7 @@ private:
             {
                 if (dense[i][j] != 0)
                 {
+                    this->valuesSize++;
                     this->A.push_back(dense[i][j]);
                     this->JA.push_back(j);
                     rowElemCount++;
@@ -278,8 +296,6 @@ private:
         }
         return portrait;
     }
-
-
 };
 
 template <typename T>
@@ -320,7 +336,8 @@ public:
     T** getDenseMatrix() const override
     {
         T** dense = new T*[this->denseRows];
-        for(size_t i = 0;i < this->denseRows;++i) {
+        for(size_t i = 0;i < this->denseRows;++i) 
+        {
             dense[i] = new T[this->denseColumns];
             for(size_t j = 0;j < this->denseColumns;++j)
             {
@@ -328,8 +345,10 @@ public:
             }
         }
 
-        for(size_t i = 0; i < this->denseRows; ++i) {
-            for (int j = IA[i]; j < IA[i+1]; ++j){
+        for(size_t i = 0; i < this->denseRows; ++i) 
+        {
+            for (int j = IA[i]; j < IA[i+1]; ++j)
+            {
                 dense[i][this->JA[j]] = this->A[j];
             }
         }
@@ -391,7 +410,7 @@ public:
 
     void setValues(const std::vector<T>& a) override
     {
-        if (a.size() != this->A.size())
+        if (a.size() != this->getValuesSize())
         {
             std::cerr << "Incompatibe sizes of values vectors!" << std::endl;
         }
@@ -506,7 +525,7 @@ public:
 
     void setValues(const std::vector<T>& a) override
     {
-        if (a.size() != this->A.size())
+        if (a.size() != this->getValuesSize())
         {
             std::cerr << "Incompatibe sizes of values vectors!" << std::endl;
         }
