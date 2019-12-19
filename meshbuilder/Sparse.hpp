@@ -63,7 +63,7 @@ public:
         {
             for (size_t j = 0; j < denseRows; j++)
             {
-                std::cout << fixed << matr[i][j] << " ";
+                std::cout << fixed << setprecision(3) << matr[i][j] << " ";
             }
             std::cout << endl;
         }
@@ -312,14 +312,18 @@ public:
         int prev;
 
         IA.push_back(0);
-        for (size_t i = 0; i < topoNN.getBlockNumber(); i++){
+        for (size_t i = 0; i < topoNN.getBlockNumber(); i++)
+        {
             temp.push_back(i);
-            for (size_t j = 0; j < topoNN.getBlockSize(i); j++){
+            for (size_t j = 0; j < topoNN.getBlockSize(i); j++)
+            {
                 temp.push_back(topoNN[i][j]);
             }
             std::sort(temp.begin(),temp.end());
             for (size_t j = 0; j < temp.size(); j++)
+            {
                 Sparse<T>::JA.push_back(temp[j]);
+            }
             prev = IA[IA.size() - 1];
             IA.push_back(temp.size()+prev);
             temp.clear();
@@ -328,7 +332,7 @@ public:
         
         this->A.reserve(this->JA.size());
         for(size_t i = 0;i < this->JA.size();++i)
-        {
+        {	
             this->A.push_back(1);//portrait
         }
     };
@@ -366,7 +370,8 @@ public:
         }
                 
         #pragma omp parallel for num_threads(threadsNumber)
-        for (size_t i = 0; i < this->denseRows; i++){
+        for (size_t i = 0; i < this->denseRows; i++)
+        {
             
             result[i] = 0;    
 
@@ -438,20 +443,28 @@ class SparseCOO:public Sparse<T>{
 public:
 
     SparseCOO(const VariableSizeMeshContainer<int>& topoNN)
-    {
+    {	
+		vector<int> temp;
+		
         this->denseColumns = this->denseRows = topoNN.getBlockNumber();
-
+		
         for (size_t i = 0; i < topoNN.getBlockNumber(); ++i)
-        {
-            IA.push_back(i);
-            this->JA.push_back(i);
-            this->A.push_back(1);//diagonal
-            for (size_t j = 0; j < topoNN.getBlockSize(i); ++j)
+        {	
+			for (size_t j = 0; j < topoNN.getBlockSize(i); j++)
             {
+                temp.push_back(topoNN[i][j]);
+			}
+			temp.push_back(i);
+
+			std::sort(temp.begin(),temp.end());
+
+            for (size_t j = 0; j < topoNN.getBlockSize(i) + 1; ++j)
+            {	
                 IA.push_back(i);
-                this->JA.push_back(topoNN[i][j]);
+                this->JA.push_back(temp[j]);
                 this->A.push_back(1);
             }
+			temp.clear();
         }
     };
 
@@ -467,7 +480,8 @@ public:
             }
         }
 
-        for(size_t i = 0; i < IA.size(); ++i) {
+        for(size_t i = 0; i < IA.size(); ++i) 
+        {
             dense[IA[i]][this->JA[i]] = this->A[i];
         }
         return dense;

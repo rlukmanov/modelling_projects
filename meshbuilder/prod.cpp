@@ -47,7 +47,7 @@ int main(int argc, char **argv) {
         cout << "\t<k4>                      Number of triangles in sequence" << endl;
         cout << "\t<path>                    Full output path, not necessary. By default, write to current directory." << endl;
         cout << "\t<filename>                Vtk output file name" << endl;
-        return 0;
+        return 1;
     }
     try {
 //creating mesh
@@ -62,6 +62,10 @@ int main(int argc, char **argv) {
             if ((Lx <= 0) || (Ly <= 0) || (k3 < 0) || (k4 < 0))
             {
                 cout << "Wrong sizes: <Lx>,<Ly>,<Nx>,<Ny> can't be less or equal to zero! <k3>,<k4> must be greater than one!" << endl;
+                return 1;
+            }
+            if (k3*k3 + k4*k4 == 0) {
+                cout << "Wrong sizes: <k3> <k4>" << endl;
                 return 1;
             }
             C.setBlockSize(2);
@@ -125,7 +129,7 @@ int main(int argc, char **argv) {
         cout << "\ttopoNN: " <<  (topoNN).getTotalSize() * sizeof(int) << " bytes" << endl;
 
 
-//output mesh
+        //output mesh
         if (!strcmp(argv[argc-2], "--vtk"))
         {
             if (argv[argc - 1] == nullptr)
