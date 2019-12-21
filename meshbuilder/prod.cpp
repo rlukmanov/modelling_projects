@@ -12,6 +12,7 @@
 #include "FixedSizeMeshContainer.hpp"
 #include "vtkGenerator.hpp"
 #include "IO.hpp"
+#include "test_solver.hpp"
 
 using namespace std;
 
@@ -29,16 +30,17 @@ int main(int argc, char **argv) {
 
     double start, end;
 
-    if ((argc == 1) || !((argc == 3) || (argc == 9) || (argc == 10)) || (strcmp(argv[argc-1], "--print") && strcmp(argv[argc-1], "--out") && strcmp(argv[argc-2], "--out") && strcmp(argv[argc-2], "--vtk"))){
-        cout << "Mesh builder v0.1 beta" << endl;
-        cout << "Usage:  --gen <Lx> <Ly> <Nx> <Ny> <k3> <k4> | --file \n\t--print | --out (<path>) | --vtk <filename>" << endl;
+    if ((argc == 1) || !((argc == 3) || (argc == 9) || (argc == 10) || (argc == 5) || (argc == 11)) || (strcmp(argv[argc-1], "--print") && strcmp(argv[argc-1], "--out") && strcmp(argv[argc-2], "--out") && strcmp(argv[argc-2], "--vtk") && strcmp(argv[argc-3], "--solver"))){
+        cout << "Mesh builder and solver v0.2 beta" << endl;
+        cout << "Usage:  --gen <Lx> <Ly> <Nx> <Ny> <k3> <k4> | --file \n\t--print | --out (<path>) | --vtk <filename> | --solver <format> <threads>" <<endl;
         cout << "Commands:" << endl;
-        cout << "\t--gen                     Generate mesh" << endl; 
-        cout << "\t--file                    Read mesh from file(in current directory)" << endl; 
+        cout << "\t--gen                     Generate mesh" << endl;
+        cout << "\t--file                    Read mesh from file(in current directory)" << endl;
         cout << "\t--print                   Print mesh to stdout" << endl;
         cout << "\t--out                     Print mesh to file" << endl;
         cout << "\t--vtk                     Print mesh in \" .vtk \" format to file" << endl;
-        cout << "Options:" << endl; 
+        cout << "\t--solver                  An example of solving the  Ax = b using the conjugate gradient method " << endl;
+        cout << "Options:" << endl;
         cout << "\t<Lx>                      Mesh X length" << endl;
         cout << "\t<Ly>                      Mesh Y length" << endl;
         cout << "\t<Nx>                      Number of X nodes" << endl;
@@ -47,6 +49,8 @@ int main(int argc, char **argv) {
         cout << "\t<k4>                      Number of triangles in sequence" << endl;
         cout << "\t<path>                    Full output path, not necessary. By default, write to current directory." << endl;
         cout << "\t<filename>                Vtk output file name" << endl;
+        cout << "\t<format>                  Sparse matrix format. Choose between \"-csr\",\"-ellp\" and \"-coo\"." << endl;
+        cout << "\t<threads>                 Threads to parallel SPMV operation." << endl;
         return 1;
     }
     try {
@@ -76,13 +80,13 @@ int main(int argc, char **argv) {
             start = omp_get_wtime();
             topos::build_coord(C, Lx, Ly, Nx, Ny);
             end = omp_get_wtime();
-            cout << "\tC: " << end - start << " sec" << endl;
+            cout << "\tC:      " << end - start << " sec" << endl;
 
             start = omp_get_wtime();
             topoEN = topos::build_topoEN(Nx, Ny, k3, k4, nE);
             end = omp_get_wtime();
             cout << "\ttopoEN: " << end - start << " sec" << endl;
-            
+
             start = omp_get_wtime();
             topoNE = topos::build_reverse_topo(topoEN);
             end = omp_get_wtime();
@@ -120,8 +124,8 @@ int main(int argc, char **argv) {
             return 1;
         }
 
-        cout << "\nMemory:\n" << endl;
-        cout << "\tC: " <<  (C).getTotalSize() * sizeof(double) << " bytes" << endl;
+        cout << "\nMemory:" << endl;
+        cout << "\tC:      " <<  (C).getTotalSize() * sizeof(double) << " bytes" << endl;
         cout << "\ttopoEN: " <<  (topoEN).getTotalSize() * sizeof(int) << " bytes" << endl;
         cout << "\ttopoNE: " <<  (topoNE).getTotalSize() * sizeof(int) << " bytes" << endl;
         cout << "\ttopoSN: " <<  (topoSN).getTotalSize() * sizeof(int) << " bytes" << endl;
@@ -163,12 +167,15 @@ int main(int argc, char **argv) {
             topoNS.printContainer();
             cout << "\nTopoNN:\n" << endl;
             topoNN.printContainer();
-            
+
             if (!type) draw_grid(Nx - 1, Ny - 1, k3, k4);
+        }
+        else if (!strcmp(argv[argc-3], "--solver")){
+            solver(topoNN, argv[argc-2], atoi(argv[argc-1]));
         }
         else
         {
-            cout << "Expected \"--vtk\" <filename> ,\"--file\" or \"--print\"" << endl;
+            cout << "Expected \"--vtk\" <filename> ,\"--file\" or \"--print\" or \"--solver <format> <threads>\"" << endl;
             return 1;
         }
     }
@@ -176,6 +183,6 @@ int main(int argc, char **argv) {
         cout << exc.what() << endl;
         return 1;
     }
-    
+
     return 0;
 }
