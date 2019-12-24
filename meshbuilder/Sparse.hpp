@@ -218,29 +218,35 @@ public:
 	}
 
 	void set_model_values() override {
-		T** matr = getDenseMatrix();
 		int k = 0; // number non zero element
 		std::vector<int> diag;
 		std::vector<T> values((*this).getValuesSize());
 		double sum;
 		
+		
 		// set non diag elements by sin(i+j)
 		for (int i = 0; i < this->denseRows; i++)
-			for (int j = 0; j < this->denseColumns; j++)
-				if (matr[i][j] != 0){
-					if (i != j)
-						matr[i][j] = values[k] = sin(i + j);
+			for (int j = i * this->rowOffset; j < (i + 1) * this->rowOffset; j++)
+				if (this->A[j] != 0){
+					if (i != this->JA[j])
+						values[k] = sin(i + this->JA[j]);
 					else
 						diag.push_back(k);
 					k++;
 				}
-					
+		
+		
+		k = 0;
 		// set diag elements by (sum(abs(mat[i][j]))) * 1.1
 		for (int i = 0; i < this->denseRows; i++){
 			sum = 0;
-			for (int j = 0; j < this->denseColumns; j++)
-				if (j != i)
-					sum += abs(matr[i][j]);
+			for (int j = i * this->rowOffset; j < (i + 1) * this->rowOffset; j++)
+				if (this->A[j] != 0){
+					if (i != this->JA[j])
+						sum += abs(values[k]);
+					k++;
+				}
+				
 			sum *= 1.1;
 			values[diag[i]] = sum;
 		}
@@ -363,7 +369,7 @@ public:
 		}
 		IA.push_back(this->denseColumns);
 
-		this->A.reserve(this->JA.size());
+		//this->A.reserve(this->JA.size());
 		for (size_t i = 0; i < this->JA.size(); ++i)
 		{
 			this->A.push_back(1);//portrait
@@ -467,31 +473,32 @@ public:
 	}
 	
 	void set_model_values() override {
-		T** matr = getDenseMatrix();
-		int k = 0; // number non zero element
 		std::vector<int> diag;
 		double sum;
+		int i = 0;
 		
-		// set non diag elements by sin(i+j)
-		for (int i = 0; i < this->denseRows; i++)
-			for (int j = 0; j < this->denseColumns; j++)
-				if (matr[i][j] != 0){
-					if (i != j)
-						matr[i][j] = this->A[k] = sin(i + j);
-					else
-						diag.push_back(k);
-					k++;
-				}
-	
-		// set diag elements by (sum(abs(mat[i][j]))) * 1.1
-		for (int i = 0; i < this->denseRows; i++){
-			sum = 0;
-			for (int j = 0; j < this->denseColumns; j++)
-				if (j != i)
-					sum += abs(matr[i][j]);
-			sum *= 1.1;
-			this->A[diag[i]] = sum;
+		for (size_t k = 0; k < this->denseRows; k++){	
+			for (int j = IA[k]; j < IA[k + 1]; j++){
+				if (this->JA[j] != k)
+					this->A[i] = sin(k + this->JA[j]);
+				else
+					diag.push_back(i);
+				i++;
+			}
 		}
+		
+		i = 0;
+		// set diag elements by (sum(abs(mat[i][j]))) * 1.1
+		for (int k = 0; k < diag.size(); k++){
+			sum = 0;
+			for (int j = IA[k]; j < IA[k + 1]; j++){
+				if (this->JA[j] != k)
+					sum += abs(this->A[i]);
+				i++;
+			}
+			this->A[diag[k]] = 1.1 * sum;	
+		}
+		
 	}
 };
 
@@ -618,31 +625,32 @@ public:
 	}
 
 	void set_model_values() override {
-		T** matr = getDenseMatrix();
-		int k = 0; // number non zero element
 		std::vector<int> diag;
 		double sum;
 		
-		// set non diag elements by sin(i+j)
-		for (int i = 0; i < this->denseRows; i++)
-			for (int j = 0; j < this->denseColumns; j++)
-				if (matr[i][j] != 0){
-					if (i != j)
-						matr[i][j] = this->A[k] = sin(i + j);
-					else
-						diag.push_back(k);
-					k++;
-				}
-	
-		// set diag elements by (sum(abs(mat[i][j]))) * 1.1
-		for (int i = 0; i < this->denseRows; i++){
-			sum = 0;
-			for (int j = 0; j < this->denseColumns; j++)
-				if (j != i)
-					sum += abs(matr[i][j]);
-			sum *= 1.1;
-			this->A[diag[i]] = sum;
+		int i = 0;
+		int j = 0;
+		// set non diag elements by sin(i+j)		
+		for (int k = 0; k < this->A.size(); k++){
+			i = IA[k];
+			j = this->JA[k];
+			
+			if (i != j)
+				this->A[k] = sin(i + j);
+			else
+				diag.push_back(k);
 		}
+		
+		i = 0;
+		// set diag elements by (sum(abs(mat[i][j]))) * 1.1
+		for (int k = 0; k < diag.size(); k++){
+			sum = 0;
+			for (i; IA[i] == k; i++){
+				if (this->JA[i] != IA[i])
+					sum += abs(this->A[i]);
+			}
+			this->A[diag[k]] = 1.1 * sum;	
+		}
+		
 	}
-
 };
